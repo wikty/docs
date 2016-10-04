@@ -1,0 +1,467 @@
+服务器配置
+1. yii自带服务器
+在yii项目根目录下运行：php yii serve，可在本地8080端口访问，或者指定端口php yii serve --port=8888
+
+2. apache配置
+# 配置内容一般放在虚拟主机配置文件中
+# 设置文档根目录为 “basic/web”
+DocumentRoot "path/to/basic/web"
+
+<Directory "path/to/basic/web">
+    # 开启 mod_rewrite 用于美化 URL 功能的支持（译注：对应 pretty URL 选项）
+    RewriteEngine on
+    # 如果请求的是真实存在的文件或目录，直接访问
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    # 如果请求的不是真实文件或目录，分发请求至 index.php
+    RewriteRule . index.php
+
+    # ...其它设置...
+</Directory>
+
+3. nginx配置（需要额外安装fcgi）
+# nginx的配置
+server {
+    charset utf-8;
+    client_max_body_size 128M;
+
+    listen 80; ## listen for ipv4
+    #listen [::]:80 default_server ipv6only=on; ## listen for ipv6
+
+    server_name mysite.local;
+    root        /path/to/basic/web;
+    index       index.php;
+
+    access_log  /path/to/basic/log/access.log;
+    error_log   /path/to/basic/log/error.log;
+
+    location / {
+        # Redirect everything that isn't a real file to index.php
+        try_files $uri $uri/ /index.php$is_args$args;
+    }
+
+    # uncomment to avoid processing of calls to non-existing static files by Yii
+    #location ~ \.(js|css|png|jpg|gif|swf|ico|pdf|mov|fla|zip|rar)$ {
+    #    try_files $uri =404;
+    #}
+    #error_page 404 /404.html;
+
+    location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        #fastcgi_param HTTPS on;当运行一个 HTTPS 服务器时，配置该项后yii才能知道是https
+        fastcgi_pass   127.0.0.1:9000;
+        #fastcgi_pass unix:/var/run/php5-fpm.sock;
+        try_files $uri =404;
+    }
+
+    location ~ /\.(ht|svn|git) {
+        deny all;
+    }
+}
+# php.ini的配置
+cgi.fix_pathinfo=0 ， 能避免掉很多不必要的 stat() 系统调用
+
+
+
+应用目录结构
+basic/                  应用根目录
+    composer.json       Composer 配置文件, 描述包信息，主要是应用程序依赖第三方包的描述信息
+    config/             包含应用配置及其它配置
+        console.php     控制台应用配置信息
+        web.php         Web 应用配置信息
+    commands/           包含控制台命令类
+    controllers/        包含控制器类
+    models/             包含模型类
+    runtime/            包含 Yii 在运行时生成的文件，例如日志和缓存文件
+    vendor/             包含已经安装的 Composer 包，包括 Yii 框架自身
+    views/              包含视图文件
+    web/                Web 应用根目录，包含 Web 入口文件，服务器将此处配置为web唯一入口
+        assets/         包含 Yii 发布的资源文件（javascript 和 css）
+        index.php       应用入口文件
+    yii                 Yii 控制台命令执行脚本，用来执行应用程序的后台任务，需要有执行权限，通过./yii <route> [arguments] [options]运行
+
+
+请求生命周期
+    用户向入口脚本 web/index.php 发起请求。
+    入口脚本加载应用配置 并创建一个应用实例(Application)去处理请求（需要协调各个components来完成任务）。应用实例在请求周期内全局可访问（\Yii::$app），另外一个应用可以由多个modules（含完成MVC的包）组成
+    应用通过请求组件(request component) 解析请求的路由。
+    应用创建一个相应的控制器实例(controler)去处理请求。
+    控制器创建一个操作实例(action)并针对操作执行过滤器(filter)。
+    如果任何一个过滤器返回失败，则操作退出。
+    如果所有过滤器都通过，操作将被执行。
+    操作会加载一个数据模型(model)，或许是来自数据库。
+    操作会渲染一个视图(view: widget, asset bundle)，把数据模型提供给它。
+    渲染结果返回给响应组件(response componet)。
+    响应组件发送渲染(render view)结果给用户浏览器。
+
+应用实例生命周期
+
+    入口脚本加载应用主体配置数组。
+    入口脚本创建一个应用主体实例：
+        调用 yii\base\Application::preInit() 配置几个高级别应用主体属性， 比如yii\base\Application::basePath。
+        注册 yii\base\Application::errorHandler 错误处理方法.
+        配置应用主体属性.
+        调用 yii\base\Application::init() 初始化， 该函数会调用 yii\base\Application::bootstrap() 运行引导启动组件.
+    入口脚本调用 yii\base\Application::run() 运行应用主体:
+        触发 yii\base\Application::EVENT_BEFORE_REQUEST 事件。
+        处理请求：解析请求 路由 和相关参数； 创建路由指定的模块、控制器和动作对应的类，并运行动作。
+        触发 yii\base\Application::EVENT_AFTER_REQUEST 事件。
+        发送响应到终端用户.
+    入口脚本接收应用主体传来的退出状态并完成请求的处理。
+
+
+
+Yii的MVC
+视图
+使用 布局 来展示公共代码（如，页面头部、尾部）；
+将复杂的视图分成几个小视图， 可使用上面描述的渲染方法将这些小视图渲染并组装成大视图；
+创建并使用 小部件 作为视图的数据块；
+创建并使用助手类在视图中转换和格式化数据
+模板内容，用来展示给用户的
+通过yii\web\View应用组件来管理， 该组件主要提供通用方法帮助视图构造和渲染
+在视图中，可访问 $this 指向 yii\web\View 来管理和渲染这个视图文件
+当创建生成HTML页面的视图时， 在显示之前将用户输入数据进行转码和过滤非常重要， 否则，你的应用可能会被跨站脚本 攻击，
+要显示纯文本，先调用 yii\helpers\Html::encode() 进行转码
+要显示HTML内容，先调用 yii\helpers\HtmlPurifier 过滤内容
+对于 小部件 渲染的视图文件默认放在 WidgetPath/views 目录， 其中 WidgetPath 代表小部件类文件所在的目录；
+对于其他对象渲染的视图文件，建议遵循和小部件相似的规则。
+视图渲染
+在 控制器 中，可调用以下控制器方法来渲染视图：
+
+    yii\base\Controller::render(): 渲染一个 视图名 并使用一个 布局 返回到渲染结果。
+    yii\base\Controller::renderPartial(): 渲染一个 视图名 并且不使用布局。
+    yii\web\Controller::renderAjax(): 渲染一个 视图名 并且不使用布局， 并注入所有注册的JS/CSS脚本和文件，通常使用在响应AJAX网页请求的情况下。
+    yii\base\Controller::renderFile(): 渲染一个视图文件目录或 别名下的视图文件。
+    yii\base\Controller::renderContent(): renders a static string by embedding it into the currently applicable layout. This method is available since version 2.0.1.
+在 小部件 中，可调用以下小部件方法来渲染视图：
+
+    yii\base\Widget::render(): 渲染一个 视图名.
+    yii\base\Widget::renderFile(): 渲染一个视图文件目录或 别名下的视图文件。
+
+在视图中渲染另一个视图，可以调用yii\base\View视图组件提供的以下方法：
+
+    yii\base\View::render(): 渲染一个 视图名.
+    yii\web\View::renderAjax(): 渲染一个 视图名 并注入所有注册的JS/CSS脚本和文件，通常使用在响应AJAX网页请求的情况下。
+    yii\base\View::renderFile(): 渲染一个视图文件目录或 别名下的视图文件。
+在任何地方都可以通过表达式 Yii::$app->view 访问 yii\base\View 应用组件， 调用它的如前所述的方法渲染视图
+视图间共享数据
+yii\base\View视图组件提供yii\base\View::params参数 属性来让不同视图共享数据。
+布局
+布局是一种特殊的视图，代表多个视图的公共部分， 例如，大多数Web应用共享相同的页头和页尾， 在每个视图中重复相同的页头和页尾，更好的方式是将这些公共放到一个布局中， 渲染内容视图后在合适的地方嵌入到布局中。
+在布局中可访问两个预定义变量：$this 和 $content， 前者对应和普通视图类似的yii\base\View 视图组件 后者包含调用yii\base\Controller::render()方法渲染内容视图的结果。
+可配置yii\base\Application::layout 或 yii\base\Controller::layout 使用其他布局文件， 前者管理所有控制器的布局，后者覆盖前者来控制单个控制器布局，对于模块中的控制器，可配置模块的 yii\base\Module::layout 属性指定布局文件应用到模块的所有控制器
+
+
+
+
+
+模型
+模型是代表业务数据、规则和逻辑的中心地方，通常在很多地方重用， 在一个设计良好的应用中， 模型通常比控制器代码多。属性来表示业务数据；验证规则确保数据的有效性；自定义方法实现业务逻辑；请求数据以及环境数据应该由控制器传入模型，模型不直接去访问；单模型避免太多场景；定义可被共享的模型基类集合，这些基类中应该含有最小的规则集合，然后在具体的应用实例或者模块中继承它们
+基类yii\base\Model
+模型有如下特性：
+属性
+所有非静态public成员都是属性
+通过 属性 来代表业务数据，每个属性像是模型的公有可访问属性， yii\base\Model::attributes() 指定模型所拥有的属性
+属性支持对象属性访问方法，支持关联数组访问方法，支持数组迭代
+属性标签，可以通过$model->getAttributeLabel('address');访问，通过yii\base\Model::generateAttributeLabel()方法自动从属性名生成，可以重写该方法，或者定义重写方法 yii\base\Model::attributeLabels() 方法明确指定属性标签，返回一个以属性名为key，标签为值的数组。此外属性标签可以通过\Yii::t来进行多语言支持
+场景
+同一模型可能在不同场景中会有不同的业务规则和逻辑，场景特性主要应用在验证规则和块赋值
+yii\base\Model::scenario 指定当前模型的场景，默认为default
+指定场景
+$model->scenario = 'login'
+or
+$model = new User(['scenario' => 'login'])
+模型对应的可选场景，在定义模型时的验证规则中给出，或者通过重写scenarios()方法来自定义可选场景
+scenarios() 方法默认实现会返回所有yii\base\Model::rules()方法申明的验证规则中的场景
+	public function scenarios()
+    {
+        $scenarios = parent::scenarios(); // 默认场景
+        // 新添加场景
+        $scenarios[self::SCENARIO_LOGIN] = ['username', 'password']; // 当前场景下的活动属性
+        $scenarios[self::SCENARIO_REGISTER] = ['username', 'email', 'password'];
+        return $scenarios;
+    }
+调用 yii\base\Model::validate() 来验证接收到的数据， 该方法使用yii\base\Model::rules()申明的验证规则来验证每个相关属性， 如果没有找到错误，会返回 true， 否则它会将错误保存在 yii\base\Model::errors 属性中并返回false
+重写rules方法为模型的属性指定验证规则
+public function rules() {
+	return [
+		[['username', 'email', 'subject', 'body'], 'required'],
+		['email', 'email'],
+		[['email', 'password'], 'required', 'on' => 'login'], // 指定该验证规则只在login场景起作用，没有使用on的规则在所有场景下都起作用
+		[['title', 'description'], 'safe'], // 不需要进行规则验证的属性
+		[['email', 'password', '!username'], 'required', 'on' => 'login'] // username在块赋值时，只验证不赋值
+	];
+}
+块赋值
+只有当前场景下的活动属性才会被赋值，其他属性不会被赋值
+$model->attributes = \Yii::$app->request->post('ContactForm');
+某些情形下对某个属性只想要验证但不想要赋值，在scenarios()或者rules()对应场景那个属性前面添加!，就表示在该场景下不允许块赋值，但要进行规则验证
+模型的导出
+第一步：导出为数组，yii\base\Model::attributes 属性会返回 所有 yii\base\Model::attributes() 申明的属性的值。此外还有模型的toArray()方法
+第二步：数组转换为目标格式，利用各种数据转换器来完成，如yii\web\JsonResponseFormatter
+可以定义fields和extraFields方法来决定toAarray返回的字段
+// 明确列出每个字段，特别用于你想确保数据表或模型
+// 属性改变不会导致你的字段改变(保证后端的API兼容)。
+public function fields()
+{
+    return [
+        // 字段名和属性名相同
+        'id',
+
+        // 字段名为 "email"，对应属性名为 "email_address"
+        'email' => 'email_address',
+
+        // 字段名为 "name", 值通过PHP代码返回
+        'name' => function () {
+            return $this->first_name . ' ' . $this->last_name;
+        },
+    ];
+}
+
+// 过滤掉一些字段，特别用于你想
+// 继承父类实现并不想用一些敏感字段
+public function fields()
+{
+    $fields = parent::fields();
+
+    // 去掉一些包含敏感信息的字段
+    unset($fields['auth_key'], $fields['password_hash'], $fields['password_reset_token']);
+
+    return $fields;
+}
+
+
+
+ 
+控制器
+在设计良好的应用中，控制器很精练，包含的操作代码简短； 如果你的控制器很复杂，通常意味着需要重构
+从应用主体接管控制后会分析请求数据并传送到模型， 传送模型结果到视图， 最后生成输出响应信息
+控制器由 操作 组成，它是执行终端用户请求的最基础的单元， 一个控制器可有一个或多个操作
+控制器一般是面向资源的。通常情况下，控制器用来处理请求有关的资源类型， 因此控制器ID通常为和资源有关的名词
+操作通常是用来执行资源的特定操作，因此， 操作ID通常为动词
+控制器Id可包含子目录前缀，例如 admin/article 代表控制器目录下面子目录admin中的ArticleController控制器
+两种路由
+controllerID/actionID
+moduleID/controllerID/actionID
+一般操作都是定义在控制器内部以action开头的方法，如果想要重用操作，可以继承yii\base\Action，然后在控制器中重写actions()方法来指定外部的操作类
+public function actions()
+{
+    return [
+        // 用类来申明"error" 操作
+        'error' => 'yii\web\ErrorAction',
+
+        // 用配置数组申明 "view" 操作
+        'view' => [
+            'class' => 'yii\web\ViewAction',
+            'viewPrefix' => '',
+        ],
+    ];
+}
+继承yii\base\Action
+namespace app\components;
+
+use yii\base\Action;
+
+class HelloWorldAction extends Action
+{
+    public function run() // 重写run方法
+    {
+    	// 返回结果就是操作要响应的内容
+        return "Hello World";
+    }
+}
+操作接受数组参数
+首先操作的函数接口参数要声明为数组类型，url传入参数为?r=sit/index&id[]=123或?r=sit/index&id=123，后者自动转换为数组
+控制器中的默认操作是index，如果想要重写的话，在控制器内定义属性$defaultAction = 'actionName';
+
+控制器的生命周期
+	
+	在控制器创建和配置后，yii\base\Controller::init() 方法会被调用。
+	控制器根据请求操作ID创建一个操作对象:
+    如果操作ID没有指定，会使用yii\base\Controller::defaultAction默认操作ID；
+    如果在yii\base\Controller::actions()找到操作ID， 会创建一个独立操作；
+    如果操作ID对应操作方法，会创建一个内联操作；
+    否则会抛出yii\base\InvalidRouteException异常。
+
+控制器按顺序调用应用主体、模块（如果控制器属于模块）、 控制器的 beforeAction() 方法；
+
+    如果任意一个调用返回false，后面未调用的beforeAction()会跳过并且操作执行会被取消； action execution will be cancelled.
+    默认情况下每个 beforeAction() 方法会触发一个 beforeAction 事件，在事件中你可以追加事件处理操作；
+
+控制器执行操作:
+
+    请求数据解析和填入到操作参数；
+
+控制器按顺序调用控制器、模块（如果控制器属于模块）、 应用主体的 afterAction() 方法；
+
+    默认情况下每个 afterAction() 方法会触发一个 afterAction 事件，在事件中你可以追加事件处理操作；
+
+应用主体获取操作结果并赋值给响应
+
+入口脚本定义全局内容
+	yii定义的全局常量
+    YII_DEBUG：标识应用是否运行在调试模式。当在调试模式下， 应用会保留更多日志信息，如果抛出异常，会显示详细的错误调用堆栈。 因此，调试模式主要适合在开发阶段使用，YII_DEBUG 默认值为 false。
+    YII_ENV：标识应用运行的环境， 详情请查阅配置章节。 YII_ENV 默认值为 'prod'，表示应用运行在线上产品环境。
+    YII_ENABLE_ERROR_HANDLER：标识是否启用 Yii 提供的错误处理， 默认为 true。
+
+
+应用实例属性
+id 用来区分其他应用的唯一标识ID。 主要给程序使用。为了方便协作，最好使用数字作为应用主体ID， 但不强制要求为数字。
+basePath  指定该应用的根目录。 根目录包含应用系统所有受保护的源代码。可以使用路径或 路径别名 来在配置。系统预定义 @app 代表这个路径。 派生路径可以通过这个别名组成（如@app/runtime代表runtime的路径）
+aliases 指定一个key/value的数组， 数组的key为别名名称，值为对应的路径。使用这个属性来定义别名， 代替 Yii::setAlias() 方法来设置。
+bootstrap 一个数组，指定启动阶段需要运行的component和module，在启动阶段，每个组件都会实例化。 如果组件类实现接口 yii\base\BootstrapInterface, 也会调用 yii\base\BootstrapInterface::bootstrap() 方法，启动太多的组件会降低系统性能， 因为每次请求都需要重新运行启动组件，因此谨慎配置启动组件。
+catchAll 在web app中用来指定一个方法捕获所有请求，通常在维护模式下使用，同一个方法处理所有用户请求。
+components 注册多个在其他地方使用的应用组件，每一个应用组件指定一个key-value对的数组，key代表组件ID， value代表组件类名或 配置。可以通过表达式 \Yii::$app->ComponentID 全局访问
+controllerMap yii默认的控制器映射规则，可以通过配置该项来改变，通常的应用情形是外部不同的路由想要得到相同的处理，即重用控制器
+controllerNamespace 控制器默认的名称空间是app\controllers，可以通过配置该项来改变
+language 该属性影响各种 国际化 ， 包括信息翻译、日期格式、数字格式等。 例如 yii\jui\DatePicker 小部件会 根据该属性展示对应语言的日历以及日期格式。
+modules 该属性使用数组包含多个模块类 配置， 数组的键为模块ID
+name 该属性指定你可能想展示给终端用户的应用名称， 不同于需要唯一性的 yii\base\Application::id 属性， 该属性可以不唯一，该属性用于显示应用的用途
+params 该属性为一个数组，指定可以全局访问的参数， 代替程序中硬编码的数字和字符， 应用中的参数定义到一个单独的文件并随时可以访问是一个好习惯
+sourceLanguage 该属性指定应用代码的语言
+timeZone 该属性提供一种方式修改PHP运行环境中的默认时区，配置该属性本质上就是调用PHP函数 date_default_timezone_set()
+version 该属性指定应用的版本，默认为'1.0'
+charset 指定应用使用的字符集，默认值为 'UTF-8'
+defaultRoute 指定的默认控制器；当请求没有指定 路由，该属性值作为路由使用，web默认路由是site，console默认路由是help， 路由规则可能包含模块ID，控制器ID，动作ID
+extensions 指定应用安装和使用的 扩展， 默认使用@vendor/yiisoft/extensions.php文件返回的数组。 当你使用 Composer 安装扩展，extensions.php 会被自动生成和维护更新
+layoutPath 指定查找布局文件的路径， 默认值为 @app/views/layouts
+runtimePath 指定临时文件如日志文件、缓存文件等保存路径， 默认值为 @app/runtime
+viewPath 默认@app/views
+vendorPath 默认@app/vendor
+:enableCoreCommands 控制台应用支持， 用来指定是否启用Yii中的核心命令
+应用在处理请求过程中会触发事件， 可以在配置文件配置事件处理代码，如下所示：
+[
+    'on beforeRequest' => function ($event) {
+        // ... 应用实例触发
+    },
+
+    'on afterRequest' => function ($event) {
+        // ... 应用实例触发
+    },
+
+    'on beforeAction' => function ($event) {
+    	// 应用实例，模块，控制器均会触发
+        if (some condition) {
+            $event->isValid = false; // false 停止运行后续动作
+        } else {
+        }
+    },
+
+    'on afterAction' => function ($event) {
+    	// // 控制器，模块，应用实例均会触发
+        if (some condition) {
+            // 修改 $event->result
+        } else {
+        }
+    },
+]
+
+
+应用组件
+
+应用实例需要若干应用组件共同协同来处理请求（组件可以看成一个机器的零件，它们构成了机器的骨架），应用组件用来提供各种实用的功能，可以全局通过\Yii::$app->componentID来访问（组件已经实例化好了），例如：可以使用 \Yii::$app->db 来获取到已注册到应用的 yii\db\Connection， 使用 \Yii::$app->cache 来获取到已注册到应用的 yii\caching\Cache，可以使用\Yii::$app->urlManager来获取到已注册到应用解析请求路由到控制器的
+
+组件是不使用不会实例化，首次使用实例化，再次使用无需实例化。第一次使用以上表达式时候会创建应用组件实例， 后续再访问会返回此实例，无需再次创建
+
+请谨慎注册太多应用组件， 应用组件就像全局变量， 使用太多可能加大测试和维护的难度
+
+请求前必实例化组件，有时你想在每个请求处理过程都实例化某个组件即便它不会被访问， 可以将该组件ID加入到应用主体的 yii\base\Application::bootstrap 属性中
+
+预定义组件
+request 收集用户请求参数并解析路由
+db 可以执行数据库操作的数据库连接
+assetManager
+connection
+formatter
+errorHandler
+dispatcher
+mailer
+response
+session
+urlManager
+user
+view
+
+
+模块
+模块在大型项目中常备使用，这些项目的特性可分组， 每个组包含一些强相关的特性， 每个特性组可以做成一个模块由特定的开发人员和开发组来开发和维护。
+
+在特性组上，使用模块也是重用代码的好方式，一些常用特性， 如用户管理，评论管理，可以开发成模块， 这样在相关项目中非常容易被重用。
+含有MVC的独立单元，可重用，注册到应用实例中，不能够单独部署，必须隶属于某个应用主体， 当一个模块被访问，和 应用主体实例 类似会创建该模块类唯一实例（即模块类的实例），模块实例用来帮模块内代码共享数据和组件
+模块的目录结构
+forum/
+    Module.php                   模块类文件，继承自yii\base\Module
+    controllers/                 包含控制器类文件
+        DefaultController.php    default 控制器类文件
+    models/                      包含模型类文件
+    views/                       包含控制器视图文件和布局文件
+        layouts/                 包含布局文件
+        default/                 包含DefaultController控制器视图文件
+            index.php            index视图文件
+模块的初始化
+public function init()
+{
+    parent::init();
+    // 从config.php加载配置来初始化模块
+    \Yii::configure($this, require(__DIR__ . '/config.php'));
+}
+config.php
+<?php
+return [
+    'components' => [
+        // list of component configurations
+    ],
+    'params' => [
+        // list of parameters
+    ],
+];
+
+模块控制器的名称空间
+namespace app\modules\forum\controllers;
+可配置yii\base\Module::controllerNamespace属性来自定义控制器类的命名空间
+
+模块视图的名称空间
+namespace app\modules\forum\views;
+布局文件默认放在 views/layouts 目录下， 可配置yii\base\Module::layout属性指定布局名， 如果没有配置 layout 属性名，默认会使用应用的布局。
+
+应用实例中使用模块
+应用实例配置
+[
+    'modules' => [
+        'forum' => [
+            'class' => 'app\modules\forum\Module',
+            // ... 模块其他配置 ...
+        ],
+    ],
+]
+
+模块defaultRoute，在没有指定控制器时，应用该配置的控制器
+
+在模块中，可能经常需要获取模块类的实例来访问模块ID，模块参数，模块组件等， 可以使用如下语句来获取：
+
+$module = MyModuleClass::getInstance();
+也可以使用如下方式访问模块实例:
+
+// 获取ID为 "forum" 的模块
+$module = \Yii::$app->getModule('forum');
+
+// 获取处理当前请求控制器所属的模块
+$module = \Yii::$app->controller->module;
+
+模块每个请求均启动，在应用实例中配置bootstrap
+
+模块嵌套
+
+模块可无限级嵌套，也就是说，模块可以包含另一个包含模块的模块， 我们称前者为父模块，后者为子模块， 子模块必须在父模块的yii\base\Module::modules属性中申明
+	public function init()
+    {
+        parent::init();
+
+        $this->modules = [
+            'admin' => [
+                // 此处应考虑使用一个更短的命名空间
+                'class' => 'app\modules\forum\modules\admin\Module',
+            ],
+        ];
+    }

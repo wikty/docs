@@ -1,0 +1,66 @@
+Join Table
+
+Example:
+Customer Table
+id username
+1    tom
+2    jonh
+3	 krush
+
+Order Table
+customer_id name  price
+    4		 apple  100
+    2        orange 200
+
+1. Cross Join
+
+两个数据表的笛卡尔积
+
+select * from customer, order;
+select * from customer cross join order;
+
+id username customer_id name    price
+1    tom       4         apple    100
+1    tom       2         orange   200
+2    jonh      4         apple    100
+2    jonh      2         orange   200
+3	 krush     4         apple    100
+3	 krush     2         orange   200
+
+2. Inner Join
+
+两个数据表中共同匹配的数据行返回到结果集
+
+select * from customer, order where customer.id = order.customer_id;
+select * from customer inner join order on customer.id = order.customer_id;
+
+id username customer_id name    price
+2    jonh       2       orange   200
+
+3. Left Join and Right Join
+
+两个数据表中共同匹配的数据行以及left表或right表中不匹配的数据行返回到结果集
+
+select * from customer left join order on customer.id = order.customer_id;
+
+id username customer_id name    price
+2    jonh       2       orange   200
+2    jonh       null     null    null
+3	 krush      null     null    null
+
+select * from customer right join order on customer.id = order.customer_id;
+
+id username customer_id name    price
+2    jonh       2       orange   200
+null null       4		 apple  100
+
+4. Table join itself
+
+Org Table
+id parent_id name
+1     0      china
+2     1      shanxi
+3     2      taiyuan
+
+select a.name as parent, b.name as child from org as a, org as child where child.parent = parent.id;
+
