@@ -817,3 +817,64 @@ $a = new ArrayObject(array(1)); // instantiates object of class ArrayObject
 // without the "use ArrayObject" we would instantiate an object of class foo\ArrayObject
 func(); // calls function My\Full\functionName
 echo CONSTANT; // echoes the value of My\Full\CONSTANT
+
+PHP - exceptions
+
+php内置异常
+class Exception
+{
+    protected $message = 'Unknown exception';   // exception message
+    private   $string;                          // __toString cache
+    protected $code = 0;                        // user defined exception code
+    protected $file;                            // source filename of exception
+    protected $line;                            // source line of exception
+    private   $trace;                           // backtrace
+    private   $previous;                        // previous exception if nested exception
+
+    public function __construct($message = null, $code = 0, Exception $previous = null);
+
+    final private function __clone();           // Inhibits cloning of exceptions.
+
+    final public  function getMessage();        // message of exception
+    final public  function getCode();           // code of exception
+    final public  function getFile();           // source filename
+    final public  function getLine();           // source line
+    final public  function getTrace();          // an array of the backtrace()
+    final public  function getPrevious();       // previous exception
+    final public  function getTraceAsString();  // formatted string of trace
+
+    // Overrideable
+    public function __toString();               // formatted string for display
+}
+注:继承该类的子类,如果重写__construct的话，最好在内部调用parent::__construct
+
+Standard PHP Library - SPL
+http://cn.php.net/spl
+
+SPL Exceptions Class Tree
+
+    LogicException (extends Exception): Exception that represents error in the program logic
+        
+        BadFunctionCallException: Exception thrown if a callback refers to an undefined function or if some arguments are missing. A typical use for this exception, is in conjunction with the is_callable() function
+            
+            BadMethodCallException : Exception thrown if a callback refers to an undefined method or if some arguments are missing. typically used in conjunction with __call magic method.
+        
+        DomainException: Exception thrown if a value does not adhere to a defined valid data domain. 
+        
+        InvalidArgumentException: Exception thrown if an argument is not of the expected type. 
+        
+        LengthException: Exception thrown if a length is invalid. 
+        
+        OutOfRangeException: Exception thrown when an illegal index was requested. This represents errors that should be detected at compile time. 
+    
+    RuntimeException (extends Exception): Exception thrown if an error which can only be found on runtime occurs
+        
+        OutOfBoundsException: Exception thrown if a value is not a valid key. This represents errors that cannot be detected at compile time.  
+        
+        OverflowException: Exception thrown when adding an element to a full container. 
+        
+        UnderflowException: Exception thrown when performing an invalid operation on an empty container, such as removing an element
+
+        RangeException: Exception thrown to indicate range errors during program execution.  Normally this means there was an arithmetic error other than under/overflow. This is the runtime version of DomainException
+        
+        UnexpectedValueException: Exception thrown if a value does not match with a set of values. Typically this happens when a function calls another function and expects the return value to be of a certain type or value not including arithmetic or buffer related errors.

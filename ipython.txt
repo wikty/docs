@@ -1,0 +1,100 @@
+IPython three components
+1. An enhanced interactive Python shell(**ipython**)
+2. A decoupled two-process communication model, which allows for multiple clients 
+to connect to a computation kernel, most notably the web-based notebook provided with **Jupyter**.
+3. An architecture for interactive **parallel computing** now part of the ipyparallel package.
+
+
+IPython's Read-Evaluate-Print Loop(REPL)
+
+**Clients** read user input instructions and deliver to the corresponding evaluation process
+
+**Kernels** are the evaluation process, receive execution instructions and communicates the results back to Clients
+
+1. several clients connect to the same kernel and even allows clients and kernels to live on different machine
+2. clients and kernels must follow the same communciation protocol
+3. there are some clients avaiable, e.g.
+
+jupyter console
+jupyter qtconsole
+jupyter notebook # a web application client that allows you to create and share documents that contain live code, equations, visualizations and explanatory text
+
+jupyter console --kernel=ri # specify the kernel
+
+when you run the above commands, there are two processes started, one is the client process, 
+the other is kernel process, if there is already a kernel running that you want to connect to,
+you can pass the --existing flag
+ 
+jupyter notebook
+jupyter qtconsole --kernel=ir
+jupyter console --kernel=ir
+
+
+IPython interactive
+
+Quick reference document
+%quickref
+
+Object introspection
+
+o?
+o??
+%pdoc o
+%pdef o
+%psource o
+%pfile o
+
+Search modules and namespaces
+
+%psearch test*
+%psearch t?st
+
+Tab Completion
+
+This works for keywords, modules, methods, variables ,object.<TAB> attributes and files in the current directory
+
+System shell
+
+ls # ls belongs to ipython
+!ls # ls belongs to your system
+!!ls # return results as list to ipython shell
+l = !ls # assign results to l
+
+Expand python variable into system shell
+
+v = 'test.py'
+!ls $v
+
+Filesystem navigation
+
+%cd
+%bookmark
+
+Persistence as key-value
+
+%store v
+%store
+%store -r
+
+Macro
+
+quickly re-executing multiple lines of previous input with a single name via the %macro command, macros stored via %store, edited via %edit
+
+Session logging
+%history
+
+Auto-parentheses via the %autocall command: callable objects can be executed without parentheses: sin 3 is automatically converted to sin(3)
+
+debugger
+
+%run -d test.py
+
+%debug
+
+Running time estimate
+
+%timeit
+
+Doctest support
+
+%doctest_mode

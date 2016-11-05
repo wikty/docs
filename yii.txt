@@ -310,7 +310,8 @@ class HelloWorldAction extends Action
 id 用来区分其他应用的唯一标识ID。 主要给程序使用。为了方便协作，最好使用数字作为应用主体ID， 但不强制要求为数字。
 basePath  指定该应用的根目录。 根目录包含应用系统所有受保护的源代码。可以使用路径或 路径别名 来在配置。系统预定义 @app 代表这个路径。 派生路径可以通过这个别名组成（如@app/runtime代表runtime的路径）
 aliases 指定一个key/value的数组， 数组的key为别名名称，值为对应的路径。使用这个属性来定义别名， 代替 Yii::setAlias() 方法来设置。
-bootstrap 一个数组，指定启动阶段需要运行的component和module，在启动阶段，每个组件都会实例化。 如果组件类实现接口 yii\base\BootstrapInterface, 也会调用 yii\base\BootstrapInterface::bootstrap() 方法，启动太多的组件会降低系统性能， 因为每次请求都需要重新运行启动组件，因此谨慎配置启动组件。
+bootstrap 一个数组，指定启动阶段需要运行的component和module，在启动阶段，每个组件都会实例化。 如果组件类实现接口 yii\base\BootstrapInterface, 也会调用 yii\base\BootstrapInterface::bootstrap() 方法，启动太多的组件会降低系统性能， 因为每次请求都需要重新运行启动组件，因此谨慎配置启动组件。引导工作必须在处理每一次请求之前都进行一遍， 因此让该过程尽可能轻量化就异常重要，请尽可能地优化这一步骤。
+请尽量不要注册太多引导组件。只有他需要在 HTTP 请求处理的全部生命周期中都作用时才需要使用它。 举一个用到它的范例：一个模块需要注册额外的 URL 解析规则，就应该把它列在应用的 bootstrap 属性之中， 这样该 URL 解析规则才能在解析请求之前生效。
 catchAll 在web app中用来指定一个方法捕获所有请求，通常在维护模式下使用，同一个方法处理所有用户请求。
 components 注册多个在其他地方使用的应用组件，每一个应用组件指定一个key-value对的数组，key代表组件ID， value代表组件类名或 配置。可以通过表达式 \Yii::$app->ComponentID 全局访问
 controllerMap yii默认的控制器映射规则，可以通过配置该项来改变，通常的应用情形是外部不同的路由想要得到相同的处理，即重用控制器
@@ -465,3 +466,506 @@ $module = \Yii::$app->controller->module;
             ],
         ];
     }
+
+
+过滤器
+
+应用实例,模块,控制器均可以定义过滤器,用来在请求处理之前和之后进行某些额外的处理
+
+过滤器是 控制器 动作 执行之前或之后执行的对象。 例如访问控制过滤器可在动作执行之前来控制特殊终端用户是否有权限执行动作， 内容压缩过滤器可在动作执行之后发给终端用户之前压缩响应内容。
+
+可以在控制器类中覆盖它的 yii\base\Controller::behaviors() 方法来申明过滤器
+
+控制器类的过滤器默认应用到该类的 所有 动作， 你可以配置yii\base\ActionFilter::only属性明确指定控制器应用到哪些动作
+,也可以配置yii\base\ActionFilter::except属性使一些动作不执行过滤器
+
+除了控制器外，可在 模块或应用主体 中申明过滤器。 申明之后，过滤器会应用到所属该模块或应用主体的 所有 控制器动作， 除非像上述一样配置过滤器的 yii\base\ActionFilter::only 和 yii\base\ActionFilter::except 属性。
+
+预过滤器执行顺序为应用实例,模块,控制器的过滤器,后过滤器则反之
+
+自定义过滤器
+继承 yii\base\ActionFilter 类并覆盖 yii\base\ActionFilter::beforeAction() 和/或 yii\base\ActionFilter::afterAction() 方法来创建动作的过滤器，前者在动作执行之前执行，后者在动作执行之后执行。beforeAction() 返回值决定动作是否应该执行， 如果为false，之后的过滤器和动作不会继续执行
+
+yii自带过滤器
+Yii提供了一组常用过滤器，在yii\filters命名空间下
+yii\filters\AccessControl
+基于规则来决定允许还是拒绝请求动作的执行
+yii\filters\auth\HttpBasicAuth
+使用基于HTTP基础认证方法的令牌,通常在实现RESTful API中使用
+yii\filters\ContentNegotiator 
+响应内容格式处理和语言处理。 通过检查 GET 参数和 Accept HTTP头部来决定响应内容格式和语言
+yii\filters\HttpCache 
+HttpCache利用Last-Modified 和 Etag HTTP头实现客户端缓存
+yii\filters\PageCache 
+实现服务器端整个页面的缓存
+yii\filters\RateLimiter 
+RateLimiter 根据 漏桶算法 来实现速率限制。 主要用在实现RESTful APIs
+yii\filters\VerbFilter 
+VerbFilter检查请求动作的HTTP请求方式是否允许执行， 如果不允许，会抛出HTTP 405异常
+yii\filters\Cors
+跨域资源共享 CORS 机制允许一个网页的许多资源（例如字体、JavaScript等） 这些资源可以通过其他域名访问获取
+
+
+小部件
+小部件是面向对象方式来重用视图代码。
+创建小部件时仍需要遵循MVC模式，通常逻辑代码在小部件类， 展示内容在视图中。
+小部件是在 视图 中使用的可重用单元， 使用面向对象方式创建复杂和可配置用户界面单元
+使用小部件
+小部件基本上在views中使用，在视图中可调用 yii\base\Widget::widget() 方法使用小部件。 该方法使用 配置 数组初始化小部件并返回小部件渲染后的结果。一些小部件可在yii\base\Widget::begin() 和 yii\base\Widget::end() 调用中使用数据内容
+创建小部件
+继承 yii\base\Widget 类并覆盖 yii\base\Widget::init() 和/或 yii\base\Widget::run() 方法可创建小部件。通常init() 方法处理小部件属性， run() 方法包含小部件生成渲染结果的代码
+有时小部件需要渲染很多内容，一种更好的办法 是将内容放入一个视图文件， 然后调用yii\base\Widget::render()方法渲染该视图文件
+小部件的视图文件默认存储在WidgetPath/views目录，WidgetPath代表小部件类文件所在的目录
+
+
+
+资源包
+
+Yii在资源包中管理资源，资源包简单的说就是放在一个目录下的资源集合， 当在视图中注册一个资源包， 在渲染Web页面时会包含包中的CSS和JavaScript文件。
+定义资源包
+
+资源包指定为继承yii\web\AssetBundle的PHP类， 包名为可自动加载的PHP类名， 在资源包类中，要指定资源所在位置， 包含哪些CSS和JavaScript文件以及和其他包的依赖关系。指定yii\web\AssetBundle::basePath 和 yii\web\AssetBundle::baseUrl 让Yii知道发布资源的位置
+
+资源类型
+
+源资源: 资源文件和PHP源代码放在一起，不能被Web直接访问， 为了使用这些源资源，它们要拷贝到一个可Web访问的Web目录中 成为发布的资源，这个过程称为发布资源，随后会详细介绍。
+
+发布资源: 资源文件放在可通过Web直接访问的Web目录中；
+
+外部资源: 资源文件放在与你的Web应用不同的 Web服务器上；
+
+注:推荐将资源文件放到Web目录以避免不必要的发布资源过程
+
+资源依赖
+
+当Web页面包含多个CSS或JavaScript文件时， 它们有一定的先后顺序以避免属性覆盖,我们称这种资源先后次序称为资源依赖,资源依赖主要通过yii\web\AssetBundle::depends 属性来指定,并且资源依赖关系是可传递，也就是人说A依赖B，B依赖C，那么A也依赖C
+
+资源选项
+
+可指定yii\web\AssetBundle::cssOptions 和 yii\web\AssetBundle::jsOptions 属性来自定义页面包含CSS和JavaScript文件的方式， 这些属性值会分别传递给 yii\web\View::registerCssFile() 和 yii\web\View::registerJsFile() 方法， 在视图 调用这些方法包含CSS和JavaScript文件时。
+
+Bower 和 NPM 资源
+
+大多数 JavaScript/CSS 包通过Bower 和/或 NPM管理， 如果你的应用或扩展使用这些包， 推荐你遵循以下步骤来管理库中的资源：
+
+    修改应用或扩展的 composer.json 文件将包列入require 中， 应使用bower-asset/PackageName (Bower包) 或 npm-asset/PackageName (NPM包)来对应库。
+    创建一个资源包类并将你的应用或扩展要使用的JavaScript/CSS 文件列入到类中， 应设置 yii\web\AssetBundle::sourcePath 属性为@bower/PackageName 或 @npm/PackageName， 因为根据别名Composer会安装Bower或NPM包到对应的目录下。
+
+
+
+yii核心扩展
+
+
+    yiisoft/yii2-apidoc: 提供了一个可扩展的、高效的 API 文档生成器。核心框架的 API 文档也是用它生成的。
+    yiisoft/yii2-authclient: 提供了一套常用的认证客户端，例如 Facebook OAuth2 客户端、GitHub OAuth2 客户端。
+    yiisoft/yii2-bootstrap: 提供了一套挂件，封装了 Bootstrap 的组件和插件。
+    yiisoft/yii2-codeception: 提供了基于 Codeception 的测试支持。
+    yiisoft/yii2-debug: 提供了对 Yii 应用的调试支持。当使用该扩展是， 在每个页面的底部将显示一个调试工具条。 该扩展还提供了一个独立的页面，以显示更详细的调试信息。
+    yiisoft/yii2-elasticsearch: 提供对 Elasticsearch 的使用支持。它包含基本的查询/搜索支持， 并实现了 Active Record 模式让你可以将活动记录 存储在 Elasticsearch 中。
+    yiisoft/yii2-faker: 提供了使用 Faker 的支持，为你生成模拟数据。
+    yiisoft/yii2-gii: 提供了一个基于页面的代码生成器，具有高可扩展性，并能用来快速生成模型、 表单、模块、CRUD等。
+    yiisoft/yii2-imagine: 提供了基于 Imagine 的常用图像处理功能。
+    yiisoft/yii2-jui: 提供了一套封装 JQuery UI 的挂件以及它们的交互。
+    yiisoft/yii2-mongodb: 提供了对 MongoDB 的使用支持。它包含基本 的查询、活动记录、数据迁移、缓存、代码生成等特性。
+    yiisoft/yii2-redis: 提供了对 redis 的使用支持。它包含基本的 查询、活动记录、缓存等特性。
+    yiisoft/yii2-smarty: 提供了一个基于 Smarty 的模板引擎。
+    yiisoft/yii2-sphinx: 提供了对 Sphinx 的使用支持。它包含基本的 查询、活动记录、代码生成等特性。
+    yiisoft/yii2-swiftmailer: 提供了基于 swiftmailer 的邮件发送功能。
+    yiisoft/yii2-twig: 提供了一个基于 Twig 的模板引擎。
+
+
+路由和反路由
+由URL到控制器的动作为路由,由路由和请求参数到URL是反路由
+yii\web\UrlManager::parseRequest 解析请求为route并解析出请求参数
+ yii\web\UrlManager::createUrl 根据route和请求参数来创建url，yii\helpers\Url::to()也可以创建url
+
+ UrlManager支持两种url格式
+  the default URL format and the pretty URL format.
+  The default URL format uses a query parameter named r to represent the route and normal query parameters to represent the query parameters associated with the route,  The default URL format does not require any configuration of the yii\web\UrlManager and works in any Web server setup. i.e. /index.php?r=post/view&id=100
+
+   The pretty URL format uses the extra path following the entry script name to represent the route and the associated query parameters.To use the pretty URL format, you will need to design a set of yii\web\UrlManager::rules according to the actual requirement about how the URLs should look like i.e /index.php/post/100
+
+    可以通过配置yii\web\UrlManager::enablePrettyUrl，来开启或关闭pretty url特性
+
+
+
+请求组件
+请求组件关于请求的信息都可以通过它来访问
+$request = \Yii::$app->request
+获取get或post参数
+$get = $request->get(); 
+// 等价于: $get = $_GET;
+$id = $request->get('id');   
+// 等价于: $id = isset($_GET['id']) ? $_GET['id'] : null;
+$id = $request->get('id', 1);   
+// 等价于: $id = isset($_GET['id']) ? $_GET['id'] : 1;
+$name = $request->post('name');
+// 等价于: $name = isset($_POST['name']) ? $_POST['name'] : null;
+获取跟随请求体，传送的参数
+// 返回所有参数
+$params = $request->bodyParams;
+// 返回参数 "id"
+$param = $request->getBodyParam('id');
+获取以及测试当前请求方法
+$request->method
+if ($request->isAjax) { /* 该请求是一个 AJAX 请求 */ }
+if ($request->isGet)  { /* 请求方法是 GET */ }
+if ($request->isPost) { /* 请求方法是 POST */ }
+if ($request->isPut)  { /* 请求方法是 PUT */ }
+获取关于url的信息
+yii\web\Request::url：返回 /admin/index.php/product?id=100, 此URL不包括host info部分。
+yii\web\Request::absoluteUrl：返回 http://example.com/admin/index.php/product?id=100, 包含host infode的整个URL。
+yii\web\Request::hostInfo：返回 http://example.com, 只有host info部分。
+yii\web\Request::pathInfo：返回 /product， 这个是入口脚本之后，问号之前（查询字符串）的部分。
+yii\web\Request::queryString：返回 id=100,问号之后的部分。
+yii\web\Request::baseUrl：返回 /admin, host info之后， 入口脚本之前的部分。
+yii\web\Request::scriptUrl：返回 /admin/index.php, 没有path info和查询字符串部分。
+yii\web\Request::serverName：返回 example.com, URL中的host name。
+yii\web\Request::serverPort：返回 80, 这是web服务中使用的端口。
+获取http header
+$request->headers;
+$request->headers->get('Accept');
+$request->headers->has('User-Agent');
+yii\web\Request::userAgent：返回 User-Agent 头。
+yii\web\Request::contentType：返回 Content-Type 头的值， Content-Type 是请求体中MIME类型数据。
+yii\web\Request::acceptableContentTypes：返回用户可接受的内容MIME类型。 返回的类型是按照他们的质量得分来排序的。得分最高的类型将被最先返回。
+yii\web\Request::acceptableLanguages：返回用户可接受的语言。 返回的语言是按照他们的偏好层次来排序的。第一个参数代表最优先的语言。
+获取用户信息
+$request->userHost;
+$request->userIP;
+
+响应
+web开发的本质就是要根据request来生成response
+响应对象包含的信息有HTTP状态码，HTTP头和主体内容
+
+指定状态吗
+Yii::$app->response->statusCode = 200;
+默认状态吗是200，因此一般无需指定200，一般是出错后抛出异常（背后会发送相应的状态吗）
+常见异常
+yii\web\BadRequestHttpException: status code 400.
+yii\web\ConflictHttpException: status code 409.
+yii\web\ForbiddenHttpException: status code 403.
+yii\web\GoneHttpException: status code 410.
+yii\web\MethodNotAllowedHttpException: status code 405.
+yii\web\NotAcceptableHttpException: status code 406.
+yii\web\NotFoundHttpException: status code 404.
+yii\web\ServerErrorHttpException: status code 500.
+yii\web\TooManyRequestsHttpException: status code 429.
+yii\web\UnauthorizedHttpException: status code 401.
+yii\web\UnsupportedMediaTypeHttpException: status code 415
+如果想抛出的异常不在如上列表中，可创建一个yii\web\HttpException异常， 带上状态码抛出
+
+响应头
+$headers = Yii::$app->response->headers;
+
+// 增加一个 Pragma 头，已存在的Pragma 头不会被覆盖。
+$headers->add('Pragma', 'no-cache');
+
+// 设置一个Pragma 头. 任何已存在的Pragma 头都会被丢弃
+$headers->set('Pragma', 'no-cache');
+
+// 删除Pragma 头并返回删除的Pragma 头的值到数组
+$values = $headers->remove('Pragma');
+
+响应体
+直接发送字符串
+Yii::$app->response->content = 'hello world!';
+发送特定格式内容
+$response = Yii::$app->response;
+$response->format = \yii\web\Response::FORMAT_JSON;
+$response->data = ['message' => 'hello world'];
+yii\web\Response::FORMAT_HTML: 通过 yii\web\HtmlResponseFormatter 来实现.
+yii\web\Response::FORMAT_XML: 通过 yii\web\XmlResponseFormatter来实现.
+yii\web\Response::FORMAT_JSON: 通过 yii\web\JsonResponseFormatter来实现.
+yii\web\Response::FORMAT_JSONP: 通过 yii\web\JsonResponseFormatter来实现.
+yii\web\Response::FORMAT_RAW: use this format if you want to send the response directly without applying any formatting
+因为响应格式默认为yii\web\Response::FORMAT_HTML, 只需要在操作方法中返回一个字符串， 如果想使用其他响应格式，应在返回数据前先设置格式
+public function actionInfo()
+{
+    \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+    return [
+        'message' => 'hello world',
+        'code' => 100,
+    ];
+}
+可调用yii\web\Response::redirect() 方法将用户浏览器跳转到一个URL地址
+在控制器的动作中可以$this->redirect('http://example.com/new', 301);
+或者
+\Yii::$app->response->redirect('http://example.com/new', 301)->send();
+
+如果当前请求为AJAX 请求， 发送一个 Location 头不会自动使浏览器跳转，为解决这个问题， yii\web\Response::redirect() 方法设置一个值为要跳转的URL的X-Redirect 头， 在客户端可编写JavaScript 代码读取该头部值然后让浏览器跳转对应的URL。
+
+    Info: Yii 配备了一个yii.js JavaScript 文件提供常用JavaScript功能，包括基于X-Redirect头的浏览器跳转， 因此，如果你使用该JavaScript 文件(通过yii\web\YiiAsset 资源包注册)， 就不需要编写AJAX跳转的代码。
+
+
+发送文件
+    yii\web\Response::sendFile(): 发送一个已存在的文件到客户端
+    yii\web\Response::sendContentAsFile(): 发送一个文本字符串作为文件到客户端
+    yii\web\Response::sendStreamAsFile(): 发送一个已存在的文件流作为文件到客户端，如果要发送的文件非常大，应考虑使用 yii\web\Response::sendStreamAsFile() 因为它更节约内存
+\Yii::$app->response->sendFile('path/to/file.txt')->send();
+
+一些浏览器提供特殊的名为X-Sendfile的文件发送功能， 原理为将请求跳转到服务器上的文件， Web应用可在服务器发送文件前结束，为使用该功能， 可调用yii\web\Response::xSendFile()，需要参考响应服务器ngnix，apache等配置实现X-Sendfile
+
+
+
+会话
+$session = Yii::$app->session;
+
+// 检查session是否开启 
+if ($session->isActive) ...
+
+// 开启session
+$session->open();
+
+
+// 获取session中的变量值，以下用法是相同的：
+$language = $session->get('language');
+$language = $session['language'];
+$language = isset($_SESSION['language']) ? $_SESSION['language'] : null;
+
+// 设置一个session变量，以下用法是相同的：
+$session->set('language', 'en-US');
+$session['language'] = 'en-US';
+$_SESSION['language'] = 'en-US';
+
+// 删除一个session变量，以下用法是相同的：
+$session->remove('language');
+unset($session['language']);
+unset($_SESSION['language']);
+
+// 检查session变量是否已存在，以下用法是相同的：
+if ($session->has('language')) ...
+if (isset($session['language'])) ...
+if (isset($_SESSION['language'])) ...
+
+// 遍历所有session变量，以下用法是相同的：
+foreach ($session as $name => $value) ...
+foreach ($_SESSION as $name => $value) ..
+
+// 关闭session
+$session->close();
+
+// 销毁session中所有已注册的数据
+$session->destroy();
+
+$session元素为数组时限制直接修改
+// 如下代码不会生效
+$session['captcha']['number'] = 5;
+$session['captcha']['lifetime'] = 3600;
+
+// 如下代码会生效：
+$session['captcha'] = [
+    'number' => 5,
+    'lifetime' => 3600,
+];
+
+// 如下代码也会生效：
+echo $session['captcha']['lifetime'];
+推荐的解决方案
+// 使用带通用前缀的键来存储数组
+$session['captcha.number'] = 5;
+$session['captcha.lifetime'] = 3600;
+
+
+自定义Session存储
+
+yii\web\Session 类默认存储session数据为文件到服务器上， Yii提供以下session类实现不同的session存储方式：
+
+    yii\web\DbSession: 存储session数据在数据表中
+    yii\web\CacheSession: 存储session数据到缓存中，缓存和配置中的缓存组件相关
+    yii\redis\Session: 存储session数据到以redis 作为存储媒介中
+    yii\mongodb\Session: 存储session数据到MongoDB.
+
+所有这些session类支持相同的API方法集，因此， 切换到不同的session存储介质不需要修改项目使用session的代码。
+配置会话的存储
+'components' => [
+    'session' => [
+        'class' => 'yii\web\DbSession',
+        // 'db' => 'mydb',  // 数据库连接的应用组件ID，默认为'db'.
+        // 'sessionTable' => 'my_session', // session 数据表名，默认为'session'.
+    ],
+],
+
+Flash 数据
+
+Flash数据是一种特别的session数据，它一旦在某个请求中设置后， 只会在下次请求中有效，然后该数据就会自动被删除。 常用于实现只需显示给终端用户一次的信息， 如用户提交一个表单后显示确认信息。
+// 请求 #1
+// 设置一个名为"postDeleted" flash 信息
+$session->setFlash('postDeleted', 'You have successfully deleted your post.');
+$session->addFlash('alerts', 'You have successfully deleted your post.');
+$session->addFlash('alerts', 'You have successfully added a new friend.');
+$session->addFlash('alerts', 'You are promoted.');
+
+
+// 请求 #2
+// 显示名为"postDeleted" flash 信息
+echo $session->getFlash('postDeleted');
+// $alerts 为名为'alerts'的flash信息，为数组格式
+$alerts = $session->getFlash('alerts');
+
+// 请求 #3
+// $result 为 false，因为flash信息已被自动删除
+$result = $session->hasFlash('postDeleted');
+
+For displaying Flash messages you can use yii\bootstrap\Alert widget in the following way:
+
+echo Alert::widget([
+   'options' => ['class' => 'alert-info'],
+   'body' => Yii::$app->session->getFlash('postDeleted'),
+]);
+
+
+Cookies
+yii\web\Request 和 yii\web\Response 通过名为'cookies'的属性维护一个cookie集合， 前者的cookie 集合代表请求提交的cookies， 后者的cookie集合表示发送给用户的cookies。
+// 从 "request"组件中获取cookie集合(yii\web\CookieCollection)
+$cookies = Yii::$app->request->cookies;
+
+// 获取名为 "language" cookie 的值，如果不存在，返回默认值"en"
+$language = $cookies->getValue('language', 'en');
+
+// 另一种方式获取名为 "language" cookie 的值
+if (($cookie = $cookies->get('language')) !== null) {
+    $language = $cookie->value;
+}
+
+// 可将 $cookies当作数组使用
+if (isset($cookies['language'])) {
+    $language = $cookies['language']->value;
+}
+
+// 判断是否存在名为"language" 的 cookie
+if ($cookies->has('language')) ...
+if (isset($cookies['language'])) ...
+// 从"response"组件中获取cookie 集合(yii\web\CookieCollection)
+$cookies = Yii::$app->response->cookies;
+
+// 在要发送的响应中添加一个新的cookie
+$cookies->add(new \yii\web\Cookie([
+    'name' => 'language',
+    'value' => 'zh-CN',
+]));
+
+// 删除一个cookie
+$cookies->remove('language');
+// 等同于以下删除代码
+unset($cookies['language']);
+
+
+
+错误处理
+yii\web\ErrorHandler 错误处理器默认启用， 可通过在应用的入口脚本中定义常量YII_ENABLE_ERROR_HANDLER来禁用
+'components' => [
+    'errorHandler' => [
+        'maxSourceLines' => 20,
+    ],
+],
+如果你想显示一个错误页面告诉用户请求是无效的或无法处理的， 可简单地抛出一个 yii\web\HttpException异常
+yii\web\ErrorHandler错误处理器根据常量 YII_DEBUG的值来调整错误显示，当YII_DEBUG 为 true (表示在调试模式)， 错误处理器会显示异常以及详细的函数调用栈和源代码行数来帮助调试， 当YII_DEBUG 为 false，只有错误信息会被显示以防止应用的敏感信息泄漏
+@yii/views/errorHandler/error.php: 显示不包含函数调用栈信息的错误信息，当YII_DEBUG 为 false时，所有错误都使用该视图。
+@yii/views/errorHandler/exception.php: 显示包含函数调用栈信息的错误信息时使用。
+可以配置错误处理器的 yii\web\ErrorHandler::errorView 和 yii\web\ErrorHandler::exceptionView 属性 使用自定义的错误显示视图。
+使用指定的错误操作 来自定义错误显示更方便， 为此，首先配置errorHandler组件的 yii\web\ErrorHandler::errorAction 属性
+'components' => [
+    'errorHandler' => [
+        'errorAction' => 'site/error',
+    ],
+]
+常见异常
+yii\base\Exception
+继承自PHP的全局异常\Exception
+该异常类仅仅定义了一个getName方法，用于作为别的异常类的父类
+
+yii\base\ErrorException
+继承自PHP的全局异常\ErrorException
+用来表示关于php语言本身的错误
+
+yii\base\ExitException
+继承自PHP的全局异常\Exception
+当程序中抛出该异常时，yii会捕获它并优雅的终止应用实例，所以自己不要去捕获它
+
+yii\base\InvalidCallException
+继承自PHP全局的\BadMethodCallException
+用来说明以错误的方式调用了某个方法
+
+yii\base\InvalidParamException
+继承自PHP全局的\BadMethodCallException
+向方法传递了错误的参数
+
+yii\base\InvalidValueException
+继承自全局\UnexpectedValueException
+表示函数返回值类型错误
+
+yii\base\InvalidConfigException
+继承自yii\base\Exception
+对象配置不正确
+
+yii\base\UserException
+继承自yii\base\Exception
+用作为向终端用户显示错误的基类，这类错误往往是由用户引起的
+
+yii\base\InvalidRouteException
+继承自yii\base\UserException
+表示路由无效
+
+yii\base\UnknownClassException
+yii\base\UnknownMethodException
+yii\base\UnknownPropertyException
+均继承自yii\base\Exception，用来说明访问了未定义的东西
+
+yii\web\HttpException
+继承自yii\base\UserException
+用户不恰当的请求导致引发的异常，该异常通过属性statusCode来表示标准的http状态码
+throw new \yii\web\HttpException(404, 'The requested Item could not be found.');
+yii\web\BadRequestHttpException
+继承自yii\web\HttpException
+状态吗为400的异常
+yii\web\ConflictHttpException
+继承自yii\web\HttpException
+状态吗为409的异常
+yii\web\ForbiddenHttpException
+继承自yii\web\HttpException
+状态吗为403的异常
+yii\web\GoneHttpException
+继承自yii\web\HttpException
+状态吗为410的异常
+yii\web\MethodNotAllowedHttpException
+405
+yii\web\NotAcceptableHttpException 
+406
+yii\web\NotFoundHttpException
+404
+yii\web\ServerErrorHttpException
+500
+yii\web\TooManyRequestsHttpException
+429
+yii\web\UnauthorizedHttpException
+401
+yii\web\UnprocessableEntityHttpException
+422
+yii\web\UnsupportedMediaTypeHttpException
+415
+
+
+
+
+日志
+
+Yii提供了一个强大的日志框架，这个框架具有高度的可定制性和可扩展性。使用这个框架， 你可以轻松地记录各种类型的消息，过滤它们， 并且将它们收集到不同的目标，诸如文件，数据库，邮件。
+
+使用Yii日志框架涉及下面的几个步骤：
+
+    在你代码里的各个地方记录 log messages；
+    在应用配置里通过配置 log targets 来过滤和导出日志消息；
+    检查由不同的目标导出的已过滤的日志消息（例如：Yii debugger）
+
+日志消息
+
+记录日志消息就跟调用下面的日志方法一样简单：
+
+    Yii::trace()：记录一条消息去跟踪一段代码是怎样运行的。这主要在开发的时候使用。
+    Yii::info()：记录一条消息来传达一些有用的信息。
+    Yii::warning()：记录一个警告消息用来指示一些已经发生的意外。
+    Yii::error()：记录一个致命的错误，这个错误应该尽快被检查。
+
+这些日志记录方法针对 严重程度 和 类别 来记录日志消息。 它们共享相同的函数签名 function ($message, $category = 'application')
+

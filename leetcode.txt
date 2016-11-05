@@ -1,0 +1,186 @@
+https://leetcode.com/problems/longest-consecutive-sequence/
+https://leetcode.com/problems/longest-absolute-file-path/
+https://leetcode.com/problems/find-median-from-data-stream/
+https://leetcode.com/problems/longest-substring-with-at-least-k-repeating-characters/
+https://leetcode.com/problems/decode-ways/
+https://leetcode.com/problems/factorial-trailing-zeroes/
+https://leetcode.com/problems/binary-tree-zigzag-level-order-traversal/
+https://leetcode.com/problems/verify-preorder-serialization-of-a-binary-tree/
+https://leetcode.com/problems/basic-calculator-ii/
+https://leetcode.com/problems/longest-valid-parentheses/
+
+https://leetcode.com/problems/longest-consecutive-sequence/
+/**
+ * @param {number[]} nums
+ * @return {number}
+ */
+var longestConsecutive = function(nums) {
+    var marked = [];
+    var max = 1;
+    for(i=0; i<nums.length; i++) {
+        marked[nums[i]] = true;
+        var left = i - 1;
+        while(left >= 0 && marked[nums[left]]) {
+            left--;
+        }
+        
+        var right = i + 1;
+        while(right <= nums.length-1 && marked[nums[right]]) {
+            right++;
+        }
+        
+        var l = i - left - 1 + right - i - 1;
+        if(l>max) {
+            max = l;
+        }
+    }
+    return max;
+};
+
+
+https://leetcode.com/problems/find-median-from-data-stream/
+
+function bisearch(data, order, len, target) {
+    var i = 0, j = len - 1;
+    while(i <= j) {
+        var mid = parseInt((i+j)/2, 10);
+        
+        
+    }
+}
+
+
+var TreeNode = function(val) {
+    this.left = null;
+    this.right = null;
+    this.value = val;
+};
+
+var BinaryTree = function() {
+    this.balance = 0;
+    this.n = 0;
+    this.root = null;
+};
+
+BinaryTree.prototype.addNode = function(val) {
+      if(this.root === null) {
+          this.root = new TreeNode(val);
+          this.n++;
+          return;
+      }
+      
+      var q = null;
+      var p = this.root;
+      while(true) {
+          q = p;
+          if(val < p.value) {
+              p = p.left;
+              if(p === null) {
+                  q.left = new TreeNode(val);
+                  break;
+              }
+          }
+          else {
+              p = p.right;
+              if(p === null) {
+                  q.right = new TreeNode(val);
+                  break;
+              }
+          }
+      }
+      
+      if(val < this.root.value) {
+          this.balance -= 1;
+      }
+      else {
+          this.balance += 1;
+      }
+      
+      if(this.balance < -1) {
+                               
+      }
+      
+      if(this.balance > 1) {
+          
+      }
+      
+};
+
+/**
+ * @constructor
+ */
+var MedianFinder = function() {
+    this.n = 0;
+    this.leftMax = Number.MAX_VALUE;
+    this.rightMin = Number.MIN_VALUE;
+    this.median = null;
+};
+/**
+ * @param {integer} word
+ * @return {void}
+ * Adds a num into the data structure.
+ */
+MedianFinder.prototype.addNum = function(num) {
+    if(this.n === 0) {
+        this.median = num;
+        this.leftMax = num;
+        this.n++;
+        return;
+    }
+    if(this.n === 1) {
+        var a = num, b = this.median;
+        if(a > b) {
+            var t = a;
+            a = b;
+            b = t;
+        }
+        this.leftMax = a;
+        this.rightMin = b;
+        this.median = parseInt((a+b)/2);
+        this.n++;
+        return;
+    }
+    if(num > this.median) {
+        if(num < this.rightMin) {
+            this.rightMin = num;
+        }
+        if(this.n % 2 === 0) {
+            this.median = this.rightMin;
+        }
+        else {
+            this.median = parseInt((this.median+this.rightMin)/2);
+        }
+    }
+    else if(num < this.median){
+        if(num > this.leftMax) {
+            this.leftMax = num;
+        }
+        
+        if(this.n % 2 === 0) {
+            this.median = this.leftMax;
+        }
+        else {
+            this.median = parseInt((this.median+this.leftMax)/2);
+        }
+    }
+    else { // num == this.median
+        if(this.n % 2 === 0) {
+            
+        }
+    }
+};
+
+/**
+ * @return {double}
+ * Return median of current data stream
+ */
+MedianFinder.prototype.findMedian = function() {
+    return this.median;
+};
+
+/**
+ * Your MedianFinder object will be instantiated and called as such:
+ * var mf = new MedianFinder();
+ * mf.addNum(1);
+ * mf.findMedian();
+ */
