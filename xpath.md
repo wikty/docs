@@ -1,5 +1,5 @@
 ## XPath
-A simple way to access like XML documents
+A simple way to access like-XML documents
 
 ## Basic Notation
 
@@ -8,7 +8,7 @@ Begin with a node-set so far. A new node-set is selected based on the original n
 ## Condition Checked
 
 ### Steps & Predicate
-Steps go down to the next level to fetch the now node-set, but Predicate just test current node-set and discard the unmatched nodes from node-set
+Steps go down to the next level to fetch the new node-set, but Predicate just test current node-set and discard the unmatched nodes from current node-set
 
 Each predicate can itself be just as complex as any expression: it can itself contain steps and predicates of its own.
 
@@ -17,13 +17,13 @@ Each predicate can itself be just as complex as any expression: it can itself co
 `/foo/bar`
 
 1. start with the node-set(only has the root node for now)
-2. `/foo` for each node in original node-set(only has the root node), fetch its child nodes that are `foo` elements, and take those as the new node-set
-3. `/bar` for each node in original node-set(all of `foo` elements), fetch its child nodes thar are `bar` elements, and take those as the new node-set
+2. `/foo` for each node in original node-set, fetch its child nodes that are `foo` elements, and take those as the new node-set
+3. `/bar` for each node in original node-set(all of `foo` elements), fetch its child nodes that are `bar` elements, and take those as the new node-set
 
 `/foo[bar]`
 
 1. start with the node-set(only has the root node for now)
-2. `/foo` for each node in original node-set(only has the root node), fetch its child nodes that are `foo` elements, and take those as the new node-set
+2. `/foo` for each node in original node-set, fetch its child nodes that are `foo` elements, and take those as the new node-set
 3. `[bar]` for each node in origianl node-set, if it doesn't have child `bar` element, then discard the node
 
 ## Axes
@@ -38,34 +38,35 @@ Axes specify which set of nodes to select **before** checking the condition – 
 2. `/foo` for each node in original node-set(only has the root node), fetch its child nodes that are `foo` elements, and take those as the new node-set
 3. `/following-sibling::bar` for each node in original node-set(all of `foo` elements), fetch its sibling nodes thar are `bar` elements, and take those as the new node-set
 
+### Axis
 
 1. The ancestors of the context node, consist of the parent of the context node and the parent's parent and so on
 
-		ancestor::
+		ancestor::element-name
 
 2. The context node and its ancestors.
 
-		ancestor-or-self::
+		ancestor-or-self::element-name
 
 3. The attributes of the context node, will be empty unless the context node is an node element
 
-		attribute::
+		attribute::attr-name
 
 4. The children of the context node. A child is any node immediately below the context node in the tree.
 
-		child::
+		child::element-name
 
 5. The descendants of the context node. A descendant is a child or a child of a child and so on
 
-		descendant-or-self::
+		descendant-or-self::element-name
 
 6. All nodes that are after the context node in the tree, excluding any descendants, attribute nodes, and namespace nodes.
 
-		following::
+		following::element-name
 
 7. All the following siblings of the context node. The following-sibling:: axis identifies just those children of a parent node who appear in the tree after the context node. This axis excludes all other children that appear before the context node.
 
-		following-sibling::
+		following-sibling::element-name
 
 8. The namespace nodes of the context node
 
@@ -73,22 +74,22 @@ Axes specify which set of nodes to select **before** checking the condition – 
 
 9. The parent of the context node, if there is one. The parent is the node immediately above the context node in the tree
 
-		parent::
+		parent::element-name
 
 10. All nodes that are before the context node in the tree, excluding any ancestors, attribute nodes, and namespace nodes.
 
-		preceding::
+		preceding::element-name
 
 11. All the preceding siblings of the context node. The preceding-sibling:: axis identifies just those children of a parent node who appear in the tree before the context node. This axis excludes all other children that appear after the context node.
 
-		preceding-sibling::
+		preceding-sibling::element-name
 
 14. Just the context node itself
 
 		self::
 
 
-## Syntactic Shortcuts
+## Shortcuts
 
 1. `child` is the default axis, so you no need to write `child::` before the condition if you want go down into children elements
 2. `/attribute::href` can write as `/@href` (for each node in the node-set, fetch its `href` attribute)
@@ -443,3 +444,19 @@ Axes specify which set of nodes to select **before** checking the condition – 
 43. The nearest 'author' ancestor in the current context and this 'author' element is a child of a 'book' element
 
 		ancestor::author[parent::book][1]
+
+44. All child elements node
+
+		/*
+
+45. All child elements and child text node
+
+		/child::node()
+
+46. Excludes all child nodes which contain a text node
+
+		/child::node()[not(text())]
+
+47. Excludes nodes  that are a text node themselves
+
+		/child::node()[not(self::text())]
