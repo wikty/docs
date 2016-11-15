@@ -6,14 +6,11 @@ generic C++ components that work together in a seamless way.
 * [Helper Classes](#helper-classes)
 * [Container Classes](#container-classes)
 * [Iterator Classes](#iterator-classes)
+* [Generic Algorithms](#generic-algorithms)
 
 
 
 ## <a name="function-templates"></a>function templates
-
-## <a name="generic-algorithms"></a>generic algorithms
-
-Mutating, non-mutating, sorting, numeric
 
 ## <a name="helper-classes"></a>helper classes
 
@@ -276,3 +273,137 @@ Intuitively, an output iterator is like a tape where you can write a value to th
 	std::copy (std::istream_iterator<int> (ifile), std::istream_iterator<int> (), std::ostream_iterator<int> (std::cout));
 
 ### forward iterator
+Forward iterators must implement (roughly) the union of
+requirements for input & output iterators, plus a default ctor
+
+	template <typename ForwardIterator, typename T>
+	void replace (ForwardIterator first, ForwardIterator last, const T& old_value, const T& new_value) {
+		for (; first != last; ++first)
+			if (*first == old_value) *first = new_value;
+	}
+	// Iniitalize 3 ints to default value 1
+	std::vector<int> v (3, 1);
+	v.push_back (7); // vector v: 1 1 1 7
+	replace (v.begin(), v.end(), 7, 1);
+	assert (std::find (v.begin(), v.end(), 7) == v.end());
+
+### bidirectional iterator
+Bidirectional iterators allow algorithms to pass through the elements forward & backward. Bidirectional iterators must implement the requirements for forward iterators, plus decrement operators (prefix & postfix). Many STL containers implement bidirectional iterators. e.g., list, set, multiset, map, & multimap
+
+	template <typename BidirectionalIterator, typename Compare>
+	void bubble_sort (BidirectionalIterator first, BidirectionalIterator last, Compare comp) {
+		BidirectionalIterator left_el = first, right_el = first;
+		++right_el;
+		while (first != last)
+		{
+			while (right_el != last) {
+				if (comp(*right_el, *left_el)) std::swap (left_el, right_el);
+				++right_el;
+				++left_el;
+			}
+			--last;
+			left_el = first, right_el = first;
+			++right_el;
+		}
+	}
+
+### random access iterator
+Random access iterators allow algorithms to have random access to elements stored in a container that provides random access iterators. e.g., vector & deque
+
+	std::vector<int> v (1, 1);
+	v.push_back (2); v.push_back (3); v.push_back (4); // vector v: 1 2 3 4
+	std::vector<int>::iterator i = v.begin();
+	std::vector<int>::iterator j = i + 2; cout << *j << " ";
+	i += 3; std::cout << *i << " ";
+	j = i - 1; std::cout << *j << " ";
+
+
+## <a name="generic-algorithms"></a>generic algorithms
+Algorithms operate over iterators rather than containers. Each container declares an iterator & const iterator as a
+trait. vector & deque declare random access iterators. list, map, set, multimap, & multiset declare bidirectional
+iterators. Each container declares factory methods for its iterator type: begin(), end(), rbegin(), rend(). Composing an algorithm with a container is done simply by invoking
+the algorithm with iterators for that container. Templates provide compile-time type safety for combinations of
+containers, iterators, & algorithms
+
+STL algorithms are decoupled from the particular containers they operate on & are instead parameterized by iterators. All containers with the same iterator type can use the same algorithms. Since algorithms are written to work on iterators rather than components, the software development effort is drastically reduced. 
+
+
+There are various ways to categorize STL algorithms:
+
+1. Non-mutating, which operate using a range of iterators, but don't change the data elements found
+2. Mutating, which operate using a range of iterators, but can change the order of the data elements
+3. Sorting & sets, which sort or searches ranges of elements & act on sorted ranges by testing values
+4. Numeric, which are mutating algorithms that produce numeric results
+
+### find
+
+Returns a forward iterator positioned at the first element in the given sequence range that matches a passed value
+
+	#include <vector>
+	#include <algorithm>
+	#include <assert>
+	#include <string>
+	
+	int main (int argc, char *argv[]) {
+		std::vector <std::string> projects;
+		for (int i = 1; i < argc; ++i)
+			projects.push_back (std::string (argv [i]));
+		std::vector<std::string>::iterator j = std::find (projects.begin (), projects.end (), std::string ("Lab8"));
+		if (j == projects.end ()) return 1;
+		assert ((*j) == std::string ("Lab8"));
+		return 0;
+	}
+
+### copy
+
+Copies elements from a input iterator sequence range into an output iterator
+
+	std::vector<int> v;
+	std::copy (std::istream_iterator<int>(std::cin), std::istream_iterator<int>(), std::back_inserter(v));
+	std::copy (v.begin (), v.end (), std::ostream_iterator<int> (std::cout));
+
+### fill
+
+Assign a value to the elements in a sequence
+
+	int a[10];
+	std::fill (a, a + 10, 100);
+	std::fill_n (a, 10, 200);
+	std::vector<int> v (10, 100);
+	std::fill (v.begin (), v.end (), 200);
+	std::fill_n (v.begin (), v.size (), 200);
+
+### replace
+
+Replaces all instances of a given existing value with a given new value, within a given sequence range
+
+	std::vector<int> v;
+	v.push_back(1);
+	v.push_back(2);
+	v.push_back(3);
+	v.push_back(1);
+	std::replace (v.begin (), v.end (), 1, 99);
+	assert (V[0] == 99 && V[3] == 99);
+
+### remove
+
+Remove the given value within a given sequence range, return an iterator to the new end of the range
+
+	int *nend = std::remove (pbegin, pend, 20);
+
+### remove_if
+
+remove the given value by the test condition
+
+	pend = std::remove_if (pbegin, pend, is_odd ());
+
+### transform
+
+	std::transform
+
+### for_each
+
+Applies the function object f to each element in the range
+
+	std::for_each
+

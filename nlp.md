@@ -223,6 +223,8 @@ this corpus is actually a collection of 55 texts, one for each presidential addr
 
 Many text corpora contain linguistic annotations, representing POS tags, named entities, syntactic structures, semantic roles, and so forth. NLTK provides convenient ways to access several of these corpora, and has data packages containing corpora and corpus samples, freely downloadable for use in teaching and research(<http://nltk.org/data>)
 
+A good tool for creating annotated text corpora is called Brat, and available from <http://brat.nlplab.org/>.
+
 NLTK 提供了很多注释型语料库，可供免费下载使用，这些语料库一般含有句法结构，语义角色等注释
 
 ### Corpora in Other Languages 非英语语料库
@@ -320,10 +322,13 @@ Use a conditional frequency distribution to create a table of bigrams, the first
 
 ### Example
 
-	def generate_model(cfd, word, num=20):
+	import random
+	
+	def generate_model(cfd, word, num=20, k=5):
 		for i in range(num):
 			print(word, end=' ')
-			word = cfd[word].max()
+			# word = cfd[word].max()
+			word = random.choice(cfd[word].most_common(k))[0]
 
 	words = nltk.corpus.genesis.words('english-kjv.txt')
 	bigrams = nltk.bigrams(words)
@@ -483,6 +488,7 @@ Hypernyms and hyponyms are called lexical relations because they relate one syns
 	wn.synset('tree.n.01').part_meronyms()
 	wn.synset('tree.n.01').substance_meronyms()
 	wn.synset('tree.n.01').member_holonyms()
+	wn.synset('tree.n.01').part_holonyms()	
 
 There are also relationships between verbs. For example, the act of walking involves the act of stepping, so walking entails stepping. Some verbs have multiple entailments
 
@@ -497,5 +503,609 @@ There are also relationships between verbs. For example, the act of walking invo
 	wn.lemma('horizontal.a.01.horizontal').antonyms()
 
 
-	
+We have seen that synsets are linked by a complex network of lexical relations. Given a particular synset, we can traverse the WordNet network to find synsets with related meanings. Knowing which words are semantically related is useful for indexing a collection of texts, so that a search for a general term like *vehicle* will match documents containing specific terms like *limousine*.
 
+WordNet通过同义词集间的词汇关系构成了复杂的网络关系，知道同义词集语义上的关联性对检索一段文本很有用处，比如检索vehicle时，会返回包含limousine的文档（因为limousine是一种vehicle）
+
+查看两个同义词集最近公共父同义词集：
+
+	one_synset.lowest_common_hypernyms(another_synset)
+
+度量同义词集所有路径中离根节点最近的路径长度，也即反应同义词集在概念上的具体程度：
+
+	wn.synset('vertebrate.n.01').min_depth() # 8
+	wn.synset('entity.n.01').min_depth() # 0
+
+查看两个同义词集到根节点上路径的相似度：
+
+	one_synset.path_similarity(another_synset) # [0, 1] or -1
+
+### VerbNet
+
+ NLTK also includes VerbNet, a hierarhical verb lexicon linked to WordNet. It can be accessed with `nltk.corpus.verbnet`.
+
+
+
+## Zipf's Law
+ 
+Let f(w) be the frequency of a word w in free text. Suppose that all the words of a text are ranked according to their frequency, with the most frequent word first. Zipf's law states that the frequency of a word type is inversely proportional to its rank (i.e. f × r = k, for some constant k). For example, the 50th most common word type should occur three times as frequently as the 150th most common word type.
+
+将一段文本中的单词按照其在该文本中的出现次数进行排序，根据Zipf's Law 单词出现次数和单词排名是成反比的，也就是说对于任意单词，该单词排名*该单词出现次数应该是一个常量
+
+1. Write a function to process a large text and plot word frequency against word rank using `pylab.plot`. Do you confirm Zipf's law? (Hint: it helps to use a logarithmic scale). What is going on at the extreme ends of the plotted line? 绘制大段文本的单词出现次数以及单词排名，看是否符合Zipf's Law
+    
+2. Generate random text, e.g., using `random.choice("abcdefg ")`, taking care to include the space character. You will need to import random first. Use the string concatenation operator to accumulate characters into a (very) long string. Then tokenize this string, and generate the Zipf plot as before, and compare the two plots. What do you make of Zipf's Law in the light of this? 随机生成大量的文本并切分为单词，对其进行分析，看是否符合Zipf's Law
+
+## Text Sources 文本数据来源
+
+The processing pipeline of source text to the available corpus material
+
+从文本数据来源到生成语料数据的过程：
+
+1. 从网络下载或从本地加载特定格式的数据，这里要注意编码问题
+2. 根据数据格式提取其中的文本内容，并对数据一般化并进行清理
+3. 对文本内容tokenization，生成token list
+4. 将token list装换为Text对象，该对象支持各种分析文本的方法
+
+### Electronic Books
+
+A small sample of texts from Project Gutenberg appears in the NLTK corpus collection. However, you may be interested in analyzing other texts from [Project Gutenberg](http://www.gutenberg.org/). Although 90% of the texts in Project Gutenberg are in English, it includes material in over 50 other languages.
+
+NLTK 语料库中只含有古登堡项目的一小部分文本，我们可以从利用古登堡项目的其他电子书数据来作为我们文本的数据来源
+
+
+
+	from urllib import request
+	import nltk
+	url = "http://www.gutenberg.org/files/2554/2554.txt"
+	response = request.urlopen(url)
+	raw = response.read().decode('utf8')
+	tokens = nltk.word_tokenize(raw)
+	text = nltk.Text(tokens)
+	text.collocations()
+
+### HTML Documents
+
+Much of the text on the web is in the form of HTML documents. You can use a web browser to save a page as text to a local file, then access this as described in the section on files below. However, if you're going to do this often, it's easiest to get Python to do the work directly. To get text out of HTML we will use a Python library called *BeautifulSoup*.
+
+使用BeautifulSoup库来解析HTML文档中的文本数据
+
+	from bs4 import BeautifulSoup
+	url = "http://news.bbc.co.uk/2/hi/health/2284783.stm"
+	html = request.urlopen(url).read().decode('utf8')
+	raw = BeautifulSoup(html).get_text()
+	tokens = nltk.word_tokenize(raw)
+	text = nltk.Text(tokens)
+	text.concordance('gene')
+
+### Search Engine Results
+
+The web can be thought of as a huge corpus of unannotated text. Web search engines provide an efficient means of searching this large quantity of text for relevant linguistic examples. The main advantage of search engines is size: since you are searching such a large set of documents, you are more likely to find any linguistic pattern you are interested in.  A second advantage of web search engines is that they are very easy to use. Thus, they provide a very convenient tool for quickly checking a theory, to see if it is reasonable.
+
+搜索引擎可以用来查询语义相关的词汇，因为文本基数大，搜索引擎返回的结果是十分丰富的，即词汇多样性足够强。
+
+### RSS Feeds
+
+The blogosphere is an important source of text, in both formal and informal registers. With the help of a Python library called the *Universal Feed Parser*, we can access the content of a blog
+
+博客是因为同时含有正式以及非正式文本，所以博客是很好的文本来源，借助于feedparser库，可以很方便的从博客的RSS中提取文本数据
+
+	import feedparser
+	llog = feedparser.parse("http://languagelog.ldc.upenn.edu/nll/?feed=atom")
+	llog['feed']['title']
+	post = llog.entries[2]
+	post.title
+	content = post.content[0].value
+	raw = BeautifulSoup(content).get_text()
+	
+### Local Files
+
+	path = nltk.data.find('corpora/gutenberg/melville-moby_dick.txt') # NLTK 语料库中文件的位置
+	f = open(path, 'rU') # 'U' 用来表明，打开文件时忽略换行符的差异，\r\n, \r, \n
+	raw = f.read()
+
+### PDF MSWord and other Binary Formats
+
+Text often comes in binary formats — like PDF and MSWord — that can only be opened using specialized software. Third-party libraries such as *pypdf* and *pywin32* provide access to these formats. Extracting text from multi-column documents is particularly challenging.
+
+从二进制文件中解析文本数据可以借助pypdf，pywin32，即使这样，从二进制中解析文本数据也是充满挑战的，也许更好的办法是自己手动用应用程序打开文件后导出文本数据
+
+### Char Encoding/Decoding
+
+文本数据的处理往往涉及到编码解码的问题,python支持unicode字符集,可以使用`\uxxxx`来表示任何unicode字符，在内部python将字符当成unicode字符进行处理，但是当涉及到跟外部数据交互时，我们需要考虑文件、网页数据或者命令行终端的编码是怎样的，当从外部读取时需要解码为unicode，当写入外部时需要将数据编码成外部适应的格式。
+
+一个常见的问题是，从特定编码的文件中读出数据无法在命令行终端显示，这一般是由于命令行的编码格式无法解读文件中的字符数据，此时可以将不可编码字符以unicode代码格式输出`line.encode('unicode_escape')`
+
+### Normalizing Text 文本一般化
+
+we want to convert uppercase into lowercase char, and strip off any affixes, a task known as stemming. A further step is to make sure that the resulting form is a known word in a dictionary, a task known as lemmatization.
+
+通常我们要对文本进行某些预处理，比如转换大小写以及移除后缀，这个任务被叫做提取词根，更进一步的，我们希望提取的词是字典中的合法单词，该任务叫做lemmatization
+
+NLTK includes several off-the-shelf stemmers, and if you ever need a stemmer you should use one of these in preference to crafting your own using regular expressions, since these handle a wide range of irregular cases.
+
+NLTK 自带了很多用于提取词根的工具，不同提取词根工具使用的规则不同，所以产生的结果也不同，在提取词根时工具无所谓好坏，只是不同的工具有不同的适应情形
+
+	raw = 'a mandate from the masses, not from some farcical aquatic ceremony'
+	tokens = nltk.word_tokenize(raw)	
+	porter = nltk.PorterStemmer()
+	lancaster = nltk.LancasterStemmer()
+	[porter.stem(t) for t in tokens]
+	[lancaster.stem(t) for t in tokens]	
+
+lemmatization只有在移除词缀后单词合法，才会移除词缀
+
+	wnl = nltk.WordNetLemmatizer()
+	[wnl.lemmatize(t) for t in tokens]
+
+Another normalization task involves identifying non-standard words including numbers, abbreviations, and dates, and mapping any such tokens to a special vocabulary.
+
+此外文本的一般化处理还包括对数字，缩写，日期等非标准token的处理
+
+### Tokenization
+
+The very simplest method for tokenizing text is to split on whitespace.
+
+最简单tokenization的方法，文本根据空白分割
+	
+	re.split(r'\s+', raw) # 没有考虑标点符号
+
+根据单词边界分割
+
+	re.split(r'\W+', raw)
+
+考虑了连字符以及标点符号
+	
+	re.findall(r"\w+(?:[-']\w+)*|'|[-.(]+|\S\w*", raw)
+
+NLTK 自带支持使用正则表达式tokenization的工具
+
+	text = 'That U.S.A. poster-print costs $12.40...'
+	pattern = r'''(?x)    # set flag to allow verbose regexps
+		([A-Z]\.)+        # abbreviations, e.g. U.S.A.
+		| \w+(-\w+)*        # words with optional internal hyphens
+		| \$?\d+(\.\d+)?%?  # currency and percentages, e.g. $12.40, 82%
+		| \.\.\.            # ellipsis
+		| [][.,;"'?():-_`]  # these are separate tokens; includes ], [
+	'''
+
+	tokens = nltk.regexp_tokenize(text, pattern)
+	#set(tokens).difference(nltk.corpus.words.words('en'))
+
+Tokenization turns out to be a far more difficult task than you might have expected. No single solution works well across-the-board, and we must decide what counts as a token depending on the application domain.
+
+When developing a tokenizer it helps to have access to raw text which has been manually tokenized, in order to compare the output of your tokenizer with high-quality (or "gold-standard") tokens. The NLTK corpus collection includes a sample of Penn Treebank data, including the raw Wall Street Journal text (nltk.corpus.treebank_raw.raw()) and the tokenized version (nltk.corpus.treebank.words()).
+
+tokenization并没有针对所有情形下一致的解决方案，我们通常需要根据不同应用场景来设计不同的tokenization策略，NLTK 语料库提供了人工tokenization后的数据和原始的文本数据，这样有利于程序员比对自己的tokenizatin是否精准
+
+### Segmentation 分割问题
+
+Tokenization is an instance of a more general problem of segmentation. 
+
+tokenizatin只是分割问题的特例
+
+### Sentence Segmentation 句子分割
+
+Manipulating texts at the level of individual words often presupposes the ability to divide a text into individual sentences. As we have seen, some corpora already provide access at the sentence level. 
+
+将文本分割为单词通常以将文本分割为句子为基础，NLTK的部分语料库提供了从语句级别访问数据的方法
+
+	len(nltk.corpus.brown.words()) / len(nltk.corpus.brown.sents())
+
+In other cases, the text is only available as a stream of characters. Before tokenizing the text into words, we need to segment it into sentences. NLTK facilitates this by including the Punkt sentence segmenter
+
+而在另外一些情形下我们得到的仅仅只是字符数据流，需要我们自己将其分割为语句，NLTK同样提供了语句分割工具
+
+	text = nltk.corpus.gutenberg.raw('chesterton-thursday.txt')
+	sents = nltk.sent_tokenize(text)
+
+Sentence segmentation is difficult because period is used to mark abbreviations, and some periods simultaneously mark an abbreviation and terminate a sentence, as often happens with acronyms like U.S.A.
+
+语句分割是比较困难的问题，因为句点常用作语句结尾，但同时也会被用在单词简写中
+
+### Word Segmentation
+
+For some writing systems, tokenizing text is made more difficult by the fact that there is no visual representation of word boundaries. A similar problem arises in the processing of spoken language, where the hearer must segment a continuous speech stream into individual words.
+
+像中文词之间没有明显的边界，所以分词是更难的，同时像手写识别以及语音识别中也面临同样单词边界模糊的问题
+
+Our first challenge is simply to represent the problem: we need to find a way to separate text content from the segmentation. We can do this by annotating each character with a boolean value to indicate whether or not a word-break appears after the character. Now the segmentation task becomes a search problem: find the bit string that causes the text string to be correctly segmented into words. With enough data, it is possible to automatically segment text into words with a reasonable degree of accuracy. Such methods can be applied to tokenization for writing systems that don't have any visual representation of word boundaries.
+
+让我们先来形式化这个问题，给定一个文本字符串，再给定一个二进制串，二进制串的意思是当前位置如果为1则表示相应位置字符为分词的边界，如果当前位置为0则表示处于单词内部。因此问题转换为寻找合适的二进制串使得得到的分词结果尽可能的好，如何评价分词结果呢？给定特定的二进制串后可以推导出由该二进制串分割文本产生的单词表以及表示句子的单词表索引序列，然后我们定义一个objective function，该函数值为单词表中所有词汇字符数（额外加1表示单词边界字符）之和加上单词索引序列长度来表示，我们的目标是求objective function的最小值。只要给的数据足够充分，可以使用该分词方法可以给出较好的结果。
+
+Simulated annealing is a heuristic for finding a good approximation to the optimum value of a function in a large, discrete search space, based on an analogy with annealing in metallurgy
+
+模拟退火是用来在较大离散空间中搜索近似最优化问题的启发式方法
+
+	# 根据二进制串分词
+	def segment(text, segs):
+	    words = []
+	    last = 0
+	    for i in range(len(segs)):
+	        if segs[i] == '1':
+	            words.append(text[last:i+1])
+	            last = i+1
+	    words.append(text[last:])
+	    return words
+
+	# 评价分词结果
+	def evaluate(text, segs):
+	    words = segment(text, segs)
+	    text_size = len(words)
+	    lexicon_size = sum(len(word) + 1 for word in set(words))
+	    return text_size + lexicon_size
+
+	# 查找使得objective function最小化的二进制串（基于非确定性的模拟退火）
+	from random import randint
+
+	def flip(segs, pos):
+	    return segs[:pos] + str(1-int(segs[pos])) + segs[pos+1:]
+
+	def flip_n(segs, n):
+	    for i in range(n):
+	        segs = flip(segs, randint(0, len(segs)-1))
+	    return segs
+
+	def anneal(text, segs, iterations, cooling_rate):
+	    temperature = float(len(segs))
+	    while temperature > 0.5:
+	        best_segs, best = segs, evaluate(text, segs)
+	        for i in range(iterations):
+	            guess = flip_n(segs, round(temperature))
+	            score = evaluate(text, guess)
+	            if score < best:
+	                best, best_segs = score, guess
+	        score, segs = best, best_segs
+	        temperature = temperature / cooling_rate
+	        print(evaluate(text, segs), segment(text, segs))
+	    print()
+	    return segs
+
+	# 运行结果
+	text = "doyouseethekittyseethedoggydoyoulikethekittylikethedoggy"
+	seg1 = "0000000000000001000000000010000000000000000100000000000"
+	anneal(text, seg1, 5000, 1.2)
+
+## Tagging Words
+
+Back in elementary school you learnt the difference between nouns, verbs, adjectives, and adverbs. These "word classes" are not just the idle invention of grammarians, but are useful categories for many language processing tasks.
+
+我们在语文课本上学到的动词，名词，形容词等并非单纯语法上的发明，它们在自然语言处理中具有特定的作用。
+
+ We will also see how tagging is the second step in the typical NLP pipeline, following tokenization. The process of classifying words into their parts of speech and labeling them accordingly is known as part-of-speech tagging, POS-tagging, or simply tagging. Parts of speech are also known as word classes or lexical categories. The collection of tags used for a particular task is known as a tagset. Our emphasis in this chapter is on exploiting tags, and tagging text automatically.
+
+单词标记通常在自然语言处理第一步-tokenization之后进行。对单词根据词性进行分类的过程通常被称为词性标注或者tagging，词性也即词类别。我们想要实现的就是文本的自动标注
+
+### Part-Of-Speech Tagger
+
+A part-of-speech tagger, or POS-tagger, processes a sequence of words, and attaches a part of speech tag to each word 
+
+NLTK 词性标注器为单词附加一个表示词性的字段。
+
+	text = nltk.word_tokenize("And now for something completely different")
+	nltk.pos_tag(text)
+	nltk.help.upenn_tagset('RB') # 查询tag的意义
+
+词性标注之所以重要，是因为相同词性的单词在文本中具有相似的分布性质，比如NLTK提供了一个`Text.similar(word)`方法，用来统计在文本中同word类似的单词，所谓类似是指当文本出现word1wordword2序列时，如果同时出现word1wdword2序列，则单词wd跟word类似，即寻找具有相同上下文环境的单词，利用该函数我们可以发现一般具有相同上下文的单词会具有相同的词性
+
+		text = nltk.Text(word.lower() for word in nltk.corpus.brown.words())
+		text.similar('woman')
+		text.similar('the')
+### Representing Tagged Tokens
+
+在nltk中tagged token被写作tuple，其中包含token和tag，并且支持我们用特定语法来创建tagged token
+
+	tagged_token = nltk.tag.str2tuple('fly/NN') # ('fly', 'NN')
+
+### Reading Tagged Corpora
+nltk中的某些语料库是经过标注的，并一致的提供了方法`tagged_words`来访问被标注的单词，并且当语料库提供了分割的语句时，则可以通过`tagged_sents`来访问标注后的语句
+
+	nltk.corpus.brown.tagged_words()
+	nltk.corpus.brown.tagged_words(tagset='universal')
+	nltk.corpus.nps_chat.tagged_words()
+	nltk.corpus.conll2000.tagged_words()
+	nltk.corpus.treebank.tagged_words()
+
+### Tagset
+
+下面是一个简单的标注集
+
+	Tag 	Meaning 	English Examples
+	ADJ 	adjective 	new, good, high, special, big, local
+	ADP 	adposition 	on, of, at, with, by, into, under
+	ADV 	adverb 	really, already, still, early, now
+	CONJ 	conjunction 	and, or, but, if, while, although
+	DET 	determiner, article 	the, a, some, most, every, no, which
+	NOUN 	noun 	year, home, costs, time, Africa
+	NUM 	numeral 	twenty-four, fourth, 1991, 14:24
+	PRT 	particle 	at, on, out, over per, that, up, with
+	PRON 	pronoun 	he, their, her, its, my, I, us
+	VERB 	verb 	is, say, told, given, playing, would
+	. 	punctuation marks 	. , ; !
+	X 	other 	ersatz, esprit, dunno, gr8, univeristy
+
+统计哪些标注用的比较多
+
+
+	from nltk.corpus import brown
+	brown_news_tagged = brown.tagged_words(categories='news', tagset='universal')
+	tag_fd = nltk.FreqDist(tag for (word, tag) in brown_news_tagged)
+	tag_fd.plot(cumulative=True)
+	
+### Nouns
+
+Nouns generally refer to people, places, things, or concepts, e.g.: woman, Scotland, book, intelligence. Nouns can appear after determiners and adjectives, and can be the subject or object of the verb
+
+名词通常用来表示人，物或地点等，名词可以出现在冠词和形容词后，名词可以充当动词的主语或者宾语，普通名词标注为N，专有名词标注为NP
+
+统计名词经常出现在什么词后面
+
+	from nltk.corpus import brown
+	brown_news_tagged = brown.tagged_words(categories='news', tagset='universal')
+	word_tag_pairs = nltk.bigrams(brown_news_tagged) # 构造经过标注后的单词二元组
+	noun_preceders = [a[1] for (a, b) in word_tag_pairs if b[1] == 'NOUN'] # 统计名词前面单词的词性
+	fdist = nltk.FreqDist(noun_preceders)
+	fdist.most_commont() # 根据结果可知名词经常出现在冠词，形容词，动词后面
+
+
+
+
+## Examples
+
+统计文本中双元音出现频率
+
+	import re
+	import nltk
+
+	fd = nltk.FreqDist(i for word in nltk.corpus.words.words('en') for i in re.findall(r'[aeiou]{2,}', word))
+
+英文单词通常是冗余的，一般来说去掉单词中间（单词开头和尾部的元音字母不能去掉）的元音字母也不会影响阅读，下面是一个对文本去冗余的程序
+
+	import re, nltk
+
+	def compress(word):
+		regexp = r'^[AEIOUaeiou]+|[AEIOUaeiou]+$|[^AEIOUaeiou]+'
+		pieces = re.findall(regexp, word)
+		return ''.join(pieces)
+
+	english_udhr = nltk.corpus.udhr.words('English-Latin1')
+	print(nltk.tokenwrap(compress(w) for w in english_udhr[:75]))
+
+英语单词存在词根问题，一个单词往往会有多个形式，在搜索引擎中我们常常想将用户提供的单词提取词根后再进行文档的搜索，下面是一个提取单词词根的程序
+
+	import re, nltk
+
+	def stem(word):
+		regexp = r'^(.*?)(ing|ly|ed|ious|ies|ive|es|s|ment)?$'
+		stem, suffix = re.findall(regexp, word)[0]
+		return stem
+
+	raw = 'government moving proxies happily'
+	[stem(word) for word in nltk.word_tokenize(raw)]
+
+从文本中查找潜在的具有包含概念的单词（即具有父类子类关系的单词）
+
+	from nltk.corpus import brown
+	hobbies_learned = nltk.Text(brown.words(categories=['hobbies', 'learned']))
+	hobbies_learned.findall(r"<\w*> <and> <other> <\w*s>") # 注这里的findall方法是Text对象提供的
+
+为文本基于词根构建索引工具
+
+	class IndexedText(object):
+
+	    def __init__(self, stemmer, text):
+	        self._text = text
+	        self._stemmer = stemmer
+	        self._index = nltk.Index((self._stem(word), i)
+	                                 for (i, word) in enumerate(text))
+
+	    def concordance(self, word, width=40):
+	        key = self._stem(word)
+	        wc = int(width/4)                # words of context
+	        for i in self._index[key]:
+	            lcontext = ' '.join(self._text[i-wc:i])
+	            rcontext = ' '.join(self._text[i:i+wc])
+	            ldisplay = '{:>{width}}'.format(lcontext[-width:], width=width)
+	            rdisplay = '{:{width}}'.format(rcontext[:width], width=width)
+	            print(ldisplay, rdisplay)
+
+	    def _stem(self, word):
+	        return self._stemmer.stem(word).lower()
+
+
+	porter = nltk.PorterStemmer()
+	grail = nltk.corpus.webtext.words('grail.txt')
+	text = IndexedText(porter, grail)
+	text.concordance('lie')
+
+自己格式化显示统计数据
+
+	def tabulate(cfdist, words, categories):
+	    print('{:16}'.format('Category'), end=' ')                    # column headings
+	    for word in words:
+	        print('{:>6}'.format(word), end=' ')
+	    print()
+	    for category in categories:
+	        print('{:16}'.format(category), end=' ')                  # row heading
+	        for word in words:                                        # for each word
+	            print('{:6}'.format(cfdist[category][word]), end=' ') # print table cell
+	        print()                                                   # end the row
+
+	from nltk.corpus import brown
+	cfd = nltk.ConditionalFreqDist(
+		(genre, word)
+		for genre in brown.categories()
+		for word in brown.words(categories=genre))
+
+	genres = ['news', 'religion', 'hobbies', 'science_fiction', 'romance', 'humor']
+	modals = ['can', 'could', 'may', 'might', 'must', 'will']
+	tabulate(cfd, modals, genres)
+
+Soundex算法,根据英语单词的发音来索引单词,将发音类似的单词编码为同一代码，代码格式为一个英文字母跟随三个数字（许多数据库内置对该算法的支持）
+
+
+	def soundex(word):
+		tbl = {}
+		tbl['b'] = 1
+		tbl['f'] = 1
+		tbl['p'] = 1
+		tbl['v'] = 1
+		tbl['c'] = 2
+		tbl['g'] = 2
+		tbl['j'] = 2
+		tbl['k'] = 2
+		tbl['q'] = 2
+		tbl['s'] = 2
+		tbl['x'] = 2
+		tbl['z'] = 2
+		tbl['d'] = 3
+		tbl['t'] = 3
+		tbl['l'] = 4
+		tbl['m'] = 5
+		tbl['n'] = 5
+		tbl['r'] = 6
+		word = word.lower()
+		first = word[0]
+		word = ''.join([c for c in word if c != 'h' and c != 'w'])
+		word = ''.join([str(tbl.get(c, c)) for c in word])
+		s = ''
+		last = ''	
+		for i in range(len(word)):
+			if word[i] == last:
+				continue
+			s += word[i]
+			last = word[i]
+		word = s
+		word = ''.join([word[0]]+[c for c in word[1:] if c not in 'aeiouy'])
+		if word[0].isdigit():
+			word = first + word[1:]
+		if len(word) < 4:
+			word += '0000'
+		return word[:4].upper()
+
+n-grams提取文本中相邻词对
+
+	nltk.bigrams(text)
+	nltk.trigrams(text)
+	nltk.ngrams(text, n)
+
+	n = 3
+	[text[i:i+n] for i range(len(text)-n+1)]
+
+trie树
+
+	def insert(trie, key, value):
+	    if key:
+	        first, rest = key[0], key[1:]
+	        if first not in trie:
+	            trie[first] = {}
+	        insert(trie[first], rest, value)
+	    else:
+	        trie['value'] = value
+
+	trie = {}
+	insert(trie, 'chat', 'cat')
+	insert(trie, 'name', 'wen')
+
+多文档检索，建立了关键字到文档路径列表的索引表
+
+	def raw(file):
+	    contents = open(file).read()
+	    contents = re.sub(r'<.*?>', ' ', contents)
+	    contents = re.sub('\s+', ' ', contents)
+	    return contents
+
+	def snippet(doc, term):
+	    text = ' '*30 + raw(doc) + ' '*30
+	    pos = text.index(term)
+	    return text[pos-30:pos+30]
+
+	print("Building Index...")
+	files = nltk.corpus.movie_reviews.abspaths()
+	idx = nltk.Index((w, f) for f in files for w in raw(f).split())
+
+	query = ''
+	while query != "quit":
+	    query = input("query> ")     # use raw_input() in Python 2
+	    if query in idx:
+	        for doc in idx[query]:
+	            print(snippet(doc, query))
+	    else:
+	        print("Not found")
+
+单词到id对应，将文本转换为id数据
+
+	def preprocess(tagged_corpus):
+	    words = set()
+	    tags = set()
+	    for sent in tagged_corpus:
+	        for word, tag in sent:
+	            words.add(word)
+	            tags.add(tag)
+	    wm = dict((w, i) for (i, w) in enumerate(words))
+	    tm = dict((t, i) for (i, t) in enumerate(tags))
+	    return [[(wm[w], tm[t]) for (w, t) in sent] for sent in tagged_corpus]
+
+利用matplotlib绘制条形图
+
+	from numpy import arange
+	from matplotlib import pyplot
+
+	colors = 'rgbcmyk' # red, green, blue, cyan, magenta, yellow, black
+
+	def bar_chart(categories, words, counts):
+	    "Plot a bar chart showing counts for each word by category"
+	    ind = arange(len(words))
+	    width = 1 / (len(categories) + 1)
+	    bar_groups = []
+	    for c in range(len(categories)):
+	        bars = pyplot.bar(ind+c*width, counts[categories[c]], width,
+	                         color=colors[c % len(colors)])
+	        bar_groups.append(bars)
+	    pyplot.xticks(ind+width, words)
+	    pyplot.legend([b[0] for b in bar_groups], categories, loc='upper left')
+	    pyplot.ylabel('Frequency')
+	    pyplot.title('Frequency of Six Modal Verbs by Genre')
+	    pyplot.show()
+
+	genres = ['news', 'religion', 'hobbies', 'government', 'adventure']
+	modals = ['can', 'could', 'may', 'might', 'must', 'will']
+	cfdist = nltk.ConditionalFreqDist(
+		(genre, word)
+		for genre in genres
+		for word in nltk.corpus.brown.words(categories=genre)
+		if word in modals)
+	counts = {}
+	for genre in genres:
+		counts[genre] = [cfdist[genre][word] for word in modals]
+	bar_chart(genres, modals, counts)
+
+利用networkx操纵图数据
+
+	# https://networkx.lanl.gov/
+	import networkx as nx
+	import matplotlib
+	from nltk.corpus import wordnet as wn
+
+	def traverse(graph, start, node):
+	    graph.depth[node.name] = node.shortest_path_distance(start)
+	    for child in node.hyponyms():
+	        graph.add_edge(node.name, child.name)
+	        traverse(graph, start, child)
+
+	def hyponym_graph(start):
+	    G = nx.Graph()
+	    G.depth = {}
+	    traverse(G, start, start)
+	    return G
+
+	def graph_draw(graph):
+	    nx.draw_graphviz(graph,
+	         node_size = [16 * graph.degree(n) for n in graph],
+	         node_color = [graph.depth[n] for n in graph],
+	         with_labels = False)
+	    matplotlib.pyplot.show()
+
+	dog = wn.synset('dog.n.01')
+	graph = hyponym_graph(dog)
+	graph_draw(graph)
