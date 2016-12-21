@@ -98,3 +98,4 @@ Running time estimate
 Doctest support
 
 %doctest_mode
+
