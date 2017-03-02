@@ -1,27 +1,33 @@
-1. Package Manager: pip
+---
+title: Python手册
+author: Xiao Wenbin
+date: 2016/10/21
+category: python
+---
+
+## 工具介绍
+
+### 包管理器 - pip
 
 pip is included by default with the Python 2 >=2.7.9 or Python 3 >=3.4
 
+### 版本控制 - pyenv
 
-2. Python Version Management: pyenv
-
-pyenv lets you change the global Python version, install multiple Python versions, set directory (project)-specific Python versions
+ pyenv lets you change the global Python version, install multiple Python versions, set directory (project)-specific Python versions
 
 pyenv's plugin pyenv-virtualenv provides features to manage virtualenvs and conda environments for Python on UNIX-like systems
 
 pyenv's plugin pyenv-vritualenvwrapper provides a pyenv virtualenvwrapper command to manage your virtualenvs with virtualenvwrapper
 
+### 虚拟环境 - virtualenv
 
-3. Virtual Environments: virtualenv, virtualenvwrapper, pyvenv(venv)
-
-virtualenv creates an environment that has its own installation directories, that doesn�t share libraries with other virtualenv environments, so each of application has isolated site-packages
+virtualenv creates an environment that has its own installation directories, that doesn’t share libraries with other virtualenv environments, so each of application has isolated site-packages
 
 virtualenvwrapper is a set of extensions to virtualenv.
 
-pyvenv comes with Python standard distribution from version 3.4. There is also a venv module in the standard library
+pyvenv(venv) comes with Python standard distribution from version 3.4. There is also a venv module in the standard library
 
-
-4. Anaconda distribution(data science)
+### 科学计算 - anaconda
 
 Conda is an open source package management system and environment management system for installing multiple versions of software packages and their dependencies and switching easily between them. It works on Linux, OS X and Windows, and was created for Python programs but can package and distribute any software.
 

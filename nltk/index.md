@@ -1,21 +1,103 @@
-# Natural Language Processing 自然语言处理
-By "natural language" we mean a language that is used for everyday communication by humans. In contrast to artificial languages such as programming languages and mathematical notations, natural languages have evolved as they pass from generation to generation, and are hard to pin down with explicit rules.
+# 概要
 
-自然语言是人类同于交流的语言，是不同于编程语言、数学公式这类人造语言的
+## 自然语言处理
+
+自然语言是经过一代一代人类传承的、用于交流沟通的语言，是不同于编程语言、数学公式这类人造语言的。自然语言处理（Natural Language Processing，简称[NLP](https://en.wikipedia.org/wiki/Natural_language_processing)，又被称为Computational Linguistics）是涉及甚广的技术，在手写体识别、信息检索、机器翻译、文本挖掘都发挥着重要的作用。
+
+## Python跟自然语言处理
+
+基于Python的第三方库Natural Language Toolkit（简称[NLTK](http://nltk.org)），提供了自然语言处理所需的常用工具以及丰富的语料数据等。NLTK对常见的自然语言处理任务，比如词性标注、语义分析、文本分类等，都提供了支持。本文主要基于NLTK[官方教程](http://www.nltk.org/book)而写。
+
+### NLTK使用简介
+
+0. 安装Python 3.2+
+
+1. 安装NLTK 3.0
+
+   	pip install nltk
+
+2. 下载NLTK资源数据
+
+   ```python
+   import nltk
+   nltk.download()
+   ```
+   输入以上命令后会弹出一个下载管理器，可以用它来下载自己需要的数据，为了运行NLTK官方教程中提供的样例，需要下载`book`数据：![](nltk_downloader_book.png)
+
+   测试`book`数据是否安装成功：
+
+   ```python
+   from nltk import book
+   ```
+
+3. 安装相关第三方库
+
+   	# 科学计算库
+   	pip install numpy
+   	# 二维图像绘制
+   	pip install matplotlib
+   	# 安装斯坦福大学的NLP库，NLTK可以调用该库
+   	详见：http://nlp.stanford.edu/software/
+
+### NLTK模块介绍
+
+| 模块                     | 功能                                |
+| ---------------------- | --------------------------------- |
+| corpus                 | 访问语料库和词典的标准化接口                    |
+| tokenize, stem         | 分词以及解析词干                          |
+| collocations           | 查找固定                              |
+| tag                    | 词性标注                              |
+| classify, cluster, tbl | 机器学习方法：决策树，最大熵，朴素贝叶斯，EM算法，K-Mean等 |
+| chunk                  | 用于发现命名实体                          |
+| parse, ccg             | 解析                                |
+| sem, inference         | 语义                                |
+| metrics                | 模型评估的度量方法                         |
+| probability            | 概率统计相关工具                          |
+| app, chat              | 小程序                               |
+| toolbox                | 语言学相关工具                           |
+
+### NLTK能用来做哪些工作
+
+NLTK的目标是提供一个简单、一致、易扩展易模块化的自然语言处理工具包。可以用NLTK提供的工具包轻易的处理很多常见的自然语言处理任务，但是这些实现并没有经过深入的优化，没有采用复杂的算法和底层语言去实现，因此如果对性能要求较高或者需要处理特殊的自然语言处理任务，就不建议使用NLTK来完成。
+
+### NLTK初识
+
+```python
+# 导入数据，数据都被封装成对象来使用的
+# 导入后将有text1,text2,..,text9等对象供使用
+from nltk.book import *
+# 查看单词上下文环境，即提取单词所在句子
+# 可以看到单词搭配的左邻词和右邻词比较固定
+text1.concordance('monstrous')
+# 查找具有相似上下文环境的单词
+text1.similar('monstrous')
+# 查找多个单词共同的上下文环境
+text1.commo_contexts(['monstrous', 'very'])
+# 单词在文本中出现位置的图表
+# text4是按年份组织的美国总统就职演说文本，
+# 因此以下单词位置可以体现用词习惯随时间的变化
+# Google的用词频率统计服务 https://books.google.com/ngrams
+text4.dispersion_plot(["citizens", "democracy", "freedom", "duties", "America"])
+# 统计文本的token数目
+# 所谓token就是一个字符序列，该字符序列如何划定边界是比较复杂的逻辑，
+# 简单来说可以用空格、标点符号等来为token定界
+len(text1)
+# 统计文本词汇表大小
+# 即统计各不相同的token数目
+len(set(text1))
+# 统计文本中词汇多样性
+len(set(text1)) / len(text1)
+# 统计单词在文本中的频率
+text1.count('mouse') / len(text1)
+
+```
 
 
-## Python for NLP
 
-1. Install NLTK
 
-		pip install nltk
-
-2. Download NLTK data resource
-
-		import nltk
-		nltk.download()
 
 ### Frequency Distribution 单词的频率分布
+
 It tells us the frequency of each vocabulary item in the text. It is a "distribution" because it tells us how the total number of word tokens in the text are distributed across the vocabulary items.
 
 文本中单词的总次数在所有词汇项上的分布次数
@@ -27,7 +109,7 @@ NLTK provides built-in support for frequency distribution:
 	print(fd.most_common(50)) # the 50 most frequent words of text1
 	fd.plot(50, cumulative=True) # generate a cumulative frequency plot for the 50 most frequent words
 	fd.hapaxes() # hapaxes are words that occur once only
-
+	
 	fd = FreqDist([len(w) for w in text1]) # distribution of word length
 	print(fd.most_common()) # the most frequent word lengths of text1
 	fd.max() # the most word length
@@ -74,7 +156,7 @@ To get a handle on collocations, we start off by extracting from a text a list o
 	>>> list(bigrams(['more', 'is', 'said', 'than', 'done']))
 	[('more', 'is'), ('is', 'said'), ('said', 'than'), ('than', 'done')]
 	>>> text1.collocations()
-	
+
 You should know that collocations that emerge are very specific to the genre of the texts.
 
 
@@ -276,7 +358,7 @@ NLTK支持加载用户自定义语料库：
 	fileids_regx = '*.txt' # a regular expression
 	c = PlaintextCorpusReader(corpus_root, fileids_regx)
 	c.fileids()
-
+	
 	# load your local copy of PennTreeBank
 	from nltk.corpus import BracketParseCorpusReader
 	corpus_root = r"C:\corpora\penntreebank\parsed\mrg\wsj"
@@ -323,13 +405,13 @@ Use a conditional frequency distribution to create a table of bigrams, the first
 ### Example
 
 	import random
-	
+
 	def generate_model(cfd, word, num=20, k=5):
 		for i in range(num):
 			print(word, end=' ')
 			# word = cfd[word].max()
 			word = random.choice(cfd[word].most_common(k))[0]
-
+	
 	words = nltk.corpus.genesis.words('english-kjv.txt')
 	bigrams = nltk.bigrams(words)
 	cfd = nltk.ConditionalFreqDist(bigrams)
@@ -353,10 +435,10 @@ Unix自带的单词表可以通过NLTK直接访问，下面是利用该单词表
   	
 
 	def unusual_words(text):
-    	text_vocab = set(w.lower() for w in text if w.isalpha())
-    	english_vocab = set(w.lower() for w in nltk.corpus.words.words())
-    	unusual = text_vocab - english_vocab
-    	return sorted(unusual)
+		text_vocab = set(w.lower() for w in text if w.isalpha())
+		english_vocab = set(w.lower() for w in nltk.corpus.words.words())
+		unusual = text_vocab - english_vocab
+		return sorted(unusual)
 	
 	unusual_words(nltk.corpus.gutenberg.words('austen-sense.txt'))
 
@@ -449,18 +531,18 @@ Explore synonyms with the help of WordNet:
 4. 查看同义词集的例句
 5. 查看同义词集中的所有lemmas（lemma同义词集中唯一标识一个词）
 
-	from nltk.corpus import wordnet as wn
-	wn.synsets('motorcar') # synonyms sets, output [Synset('car.n.01')]
-	wn.synset('car.n.01').lemma_names() # synonymous words or lemmas
-	wn.synset('car.n.01').definition() # definition
-	wn.synset('car.n.01').examples() # example sentences
-	wn.synset('car.n.01').lemmas()
-	wn.lemma('car.n.01.automobile')
-	wn.lemma('car.n.01.automobile').synset()
-	wn.lemma('car.n.01.automobile').name()
+   from nltk.corpus import wordnet as wn
+   wn.synsets('motorcar') # synonyms sets, output [Synset('car.n.01')]
+   wn.synset('car.n.01').lemma_names() # synonymous words or lemmas
+   wn.synset('car.n.01').definition() # definition
+   wn.synset('car.n.01').examples() # example sentences
+   wn.synset('car.n.01').lemmas()
+   wn.lemma('car.n.01.automobile')
+   wn.lemma('car.n.01.automobile').synset()
+   wn.lemma('car.n.01.automobile').name()
 
-	wn.synsets('car') # car has several synonyms sets
-	wn.lemmas('car') #  all the lemmas involving the word car
+   wn.synsets('car') # car has several synonyms sets
+   wn.lemmas('car') #  all the lemmas involving the word car
 
 ### WordNet Hierarchy
 
@@ -527,13 +609,13 @@ WordNet通过同义词集间的词汇关系构成了复杂的网络关系，知�
 
 
 ## Zipf's Law
- 
+
 Let f(w) be the frequency of a word w in free text. Suppose that all the words of a text are ranked according to their frequency, with the most frequent word first. Zipf's law states that the frequency of a word type is inversely proportional to its rank (i.e. f × r = k, for some constant k). For example, the 50th most common word type should occur three times as frequently as the 150th most common word type.
 
 将一段文本中的单词按照其在该文本中的出现次数进行排序，根据Zipf's Law 单词出现次数和单词排名是成反比的，也就是说对于任意单词，该单词排名*该单词出现次数应该是一个常量
 
 1. Write a function to process a large text and plot word frequency against word rank using `pylab.plot`. Do you confirm Zipf's law? (Hint: it helps to use a logarithmic scale). What is going on at the extreme ends of the plotted line? 绘制大段文本的单词出现次数以及单词排名，看是否符合Zipf's Law
-    
+
 2. Generate random text, e.g., using `random.choice("abcdefg ")`, taking care to include the space character. You will need to import random first. Use the string concatenation operator to accumulate characters into a (very) long string. Then tokenize this string, and generate the Zipf plot as before, and compare the two plots. What do you make of Zipf's Law in the light of this? 随机生成大量的文本并切分为单词，对其进行分析，看是否符合Zipf's Law
 
 ## Text Sources 文本数据来源
@@ -597,7 +679,7 @@ The blogosphere is an important source of text, in both formal and informal regi
 	post.title
 	content = post.content[0].value
 	raw = BeautifulSoup(content).get_text()
-	
+
 ### Local Files
 
 	path = nltk.data.find('corpora/gutenberg/melville-moby_dick.txt') # NLTK 语料库中文件的位置
@@ -647,7 +729,7 @@ Another normalization task involves identifying non-standard words including num
 The very simplest method for tokenizing text is to split on whitespace.
 
 最简单tokenization的方法，文本根据空白分割
-	
+​	
 	re.split(r'\s+', raw) # 没有考虑标点符号
 
 根据单词边界分割
@@ -655,7 +737,7 @@ The very simplest method for tokenizing text is to split on whitespace.
 	re.split(r'\W+', raw)
 
 考虑了连字符以及标点符号
-	
+​	
 	re.findall(r"\w+(?:[-']\w+)*|'|[-.(]+|\S\w*", raw)
 
 NLTK 自带支持使用正则表达式tokenization的工具
@@ -668,7 +750,7 @@ NLTK 自带支持使用正则表达式tokenization的工具
 		| \.\.\.            # ellipsis
 		| [][.,;"'?():-_`]  # these are separate tokens; includes ], [
 	'''
-
+	
 	tokens = nltk.regexp_tokenize(text, pattern)
 	#set(tokens).difference(nltk.corpus.words.words('en'))
 
@@ -727,25 +809,25 @@ Simulated annealing is a heuristic for finding a good approximation to the optim
 	            last = i+1
 	    words.append(text[last:])
 	    return words
-
+	
 	# 评价分词结果
 	def evaluate(text, segs):
 	    words = segment(text, segs)
 	    text_size = len(words)
 	    lexicon_size = sum(len(word) + 1 for word in set(words))
 	    return text_size + lexicon_size
-
+	
 	# 查找使得objective function最小化的二进制串（基于非确定性的模拟退火）
 	from random import randint
-
+	
 	def flip(segs, pos):
 	    return segs[:pos] + str(1-int(segs[pos])) + segs[pos+1:]
-
+	
 	def flip_n(segs, n):
 	    for i in range(n):
 	        segs = flip(segs, randint(0, len(segs)-1))
 	    return segs
-
+	
 	def anneal(text, segs, iterations, cooling_rate):
 	    temperature = float(len(segs))
 	    while temperature > 0.5:
@@ -760,7 +842,7 @@ Simulated annealing is a heuristic for finding a good approximation to the optim
 	        print(evaluate(text, segs), segment(text, segs))
 	    print()
 	    return segs
-
+	
 	# 运行结果
 	text = "doyouseethekittyseethedoggydoyoulikethekittylikethedoggy"
 	seg1 = "0000000000000001000000000010000000000000000100000000000"
@@ -835,7 +917,7 @@ nltk中的某些语料库是经过标注的，并一致的提供了方法`tagged
 	brown_news_tagged = brown.tagged_words(categories='news', tagset='universal')
 	tag_fd = nltk.FreqDist(tag for (word, tag) in brown_news_tagged)
 	tag_fd.plot(cumulative=True)
-	
+
 ### Nouns
 
 Nouns generally refer to people, places, things, or concepts, e.g.: woman, Scotland, book, intelligence. Nouns can appear after determiners and adjectives, and can be the subject or object of the verb
@@ -923,11 +1005,11 @@ The simplest possible tagger assigns the same tag to each token. In order to get
 	from nltk.corpus import brown
 	brown_tagged_sents = brown.tagged_sents(categories='news')
 	brown_sents = brown.sents(categories='news')
-
+	
 	# 从人工标记文本中找出最高频率的词性
 	tags = [tag for (word, tag) in brown.tagged_words(categories='news')]
 	tag = nltk.FreqDist(tags).max() # 是名词NN
-
+	
 	raw = 'I do not like green eggs and ham, I do not like them Sam I am!'
 	tokens = nltk.word_tokenize(raw)
 	default_tagger = nltk.DefaultTagger(tag)
@@ -958,7 +1040,7 @@ The regular expression tagger assigns tags to tokens on the basis of matching pa
 	regexp_tagger = nltk.RegexpTagger(patterns)
 	regexp_tagger.tag(brown_sents[3])
 	regexp_tagger.evaluate(brown_tagged_sents) # 大概1/5的准确率
-	
+
 ### The Lookup Tagges 查表标注器
 
 A lot of high-frequency words do not have the NN tag. Let's find the hundred most frequent words and store their most likely tag. We can then use this information as the model for a "lookup tagger" 
@@ -977,33 +1059,33 @@ A lot of high-frequency words do not have the NN tag. Let's find the hundred mos
 	baseline_tagger = nltk.UnigramTagger(model=likely_tags)
 	baseline_tagger.tag(brown_sents[3])
 	baseline_tagger.evaluate(brown_tagged_sents) # 大概1/2的准确率
-
+	
 	baseline_tagger = nltk.UnigramTagger(model=likely_tags, backoff=nltk.DefaultTagger('NN')) # 当单词不在高频词表中时，指定一个回退的tagger来估计词性
 	baseline_tagger.evaluate(brown_tagged_sents) # 现在准确率将近有60%
 
 观察高频词标注表大小，对标准准确率的影响，一开始增加词表的大小，标注准确率显著上升，后来增加词表大小对标准准确率的影响变小
 
 	def performance(cfd, wordlist):
-        lt = dict((word, cfd[word].max()) for word in wordlist)
-        baseline_tagger = nltk.UnigramTagger(model=lt, backoff=nltk.DefaultTagger('NN'))
-        return baseline_tagger.evaluate(brown.tagged_sents(categories='news'))
-
-    def display():
-        import pylab
+	    lt = dict((word, cfd[word].max()) for word in wordlist)
+	    baseline_tagger = nltk.UnigramTagger(model=lt, backoff=nltk.DefaultTagger('NN'))
+	    return baseline_tagger.evaluate(brown.tagged_sents(categories='news'))
+	
+	def display():
+	    import pylab
 		# 计算所有高频词
-        word_freqs = nltk.FreqDist(brown.words(categories='news')).most_common()
-        words_by_freq = [w for (w, _) in word_freqs]
-        # 计算所有单词的词性分布
+	    word_freqs = nltk.FreqDist(brown.words(categories='news')).most_common()
+	    words_by_freq = [w for (w, _) in word_freqs]
+	    # 计算所有单词的词性分布
 		cfd = nltk.ConditionalFreqDist(brown.tagged_words(categories='news'))
-        sizes = 2 ** pylab.arange(15) # 一个长度为15的list
-        # 求高频词表大小不同时，标注的准确率大小
+	    sizes = 2 ** pylab.arange(15) # 一个长度为15的list
+	    # 求高频词表大小不同时，标注的准确率大小
 		perfs = [performance(cfd, words_by_freq[:size]) for size in sizes]
 		# 不同词表大小下，标注准确率的图表
-        pylab.plot(sizes, perfs, '-bo')
-        pylab.title('Lookup Tagger Performance with Varying Model Size')
-        pylab.xlabel('Model Size')
-        pylab.ylabel('Performance')
-        pylab.show()
+	    pylab.plot(sizes, perfs, '-bo')
+	    pylab.title('Lookup Tagger Performance with Varying Model Size')
+	    pylab.xlabel('Model Size')
+	    pylab.ylabel('Performance')
+	    pylab.show()
 
 ### N-Gram Tagging
 
@@ -1016,7 +1098,7 @@ Unigram Tagger 基于一个简单的统计假设，将单词标注为人工标�
 	brown_sents = brown.sents(categories='news')
 	unigram_tagger = nltk.UnigramTagger(brown_tagged_sents) # 利用人工标注数据进行训练
 	unigram_tagger.evaluate(brown_tagged_sents) # 评分有90%以上，因为我们进行训练的数据集和进行测试的数据集是同一个，这样显然是不合理的，为此需要将人工标注的数据集分为两部分，一部分用来训练，另一部分用来测试
-
+	
 	size = int(len(brown_tagged_sents) * 0.9)
 	train_sents = brown_tagged_sents[:size]
 	test_sents = brown_tagged_sents[size:]
@@ -1029,18 +1111,18 @@ When we perform a language processing task based on unigrams, we are using one i
 
 
 	from nltk.corpus import brown
-    brown_tagged_sents = brown.tagged_sents(categories='news')
-    size = int(len(brown_tagged_sents) * 0.9)
-    train_sents = brown_tagged_sents[:size]
-    test_sents = brown_tagged_sents[size:]
-
-    trigrams = []
-    for sent in train_sents:
-        for t in nltk.trigrams(sent):
-            trigrams.append(t)
-
-    cfd = nltk.ConditionalFreqDist(((t1, t2, w3), t3) for ((w1, t1), (w2, t2), (w3, t3)) in trigrams)
-
+	brown_tagged_sents = brown.tagged_sents(categories='news')
+	size = int(len(brown_tagged_sents) * 0.9)
+	train_sents = brown_tagged_sents[:size]
+	test_sents = brown_tagged_sents[size:]
+	
+	trigrams = []
+	for sent in train_sents:
+	    for t in nltk.trigrams(sent):
+	        trigrams.append(t)
+	
+	cfd = nltk.ConditionalFreqDist(((t1, t2, w3), t3) for ((w1, t1), (w2, t2), (w3, t3)) in trigrams)
+	
 	cfd[('VERB', 'NN', 'quick')].max() # 单词quick前两个词分别为动词和名词时，quick的词性
 
 NLTK 自带了可以训练N-Gram Tagger的工具
@@ -1076,7 +1158,7 @@ Training a tagger on a large corpus may take a significant time. Instead of trai
 	output = open('t0.pkl', 'wb')
 	dump(t0, output, -1)
 	output.close()
-
+	
 	# load
 	from pickle import load
 	input = open('t0.pkl', 'r')
@@ -1182,15 +1264,15 @@ The first step in creating a classifier is deciding what features of the input a
 	# 定义feature extactor
 	def gender_features(name):
 		return {'last_letter': name[-1:]} # return feature set
-
+	
 	# 构造(input, label)数据
 	labeled_names = [(name, 'male') for name in names.words('male.txt')] + [(name, 'female') for name in names.words('female.txt')]
 	random.shuffle(labeled_names)
-
+	
 	# 构造(feature-set, label)，并将数据划分为training和testing集
 	featuresets = [(gender_features(name), label) for (name, label) in labeled_names]
 	train_set, test_set = featuresets[500:], featuresets[:500]
-
+	
 	# 构造训练集和测试集时节省内存的方法
 	from nltk.classify import apply_features
 	train_set = apply_features(gender_features, labeled_names[500:])
@@ -1198,14 +1280,14 @@ The first step in creating a classifier is deciding what features of the input a
 	
 	# 训练分类器
 	classifier = nltk.NaiveBayesClassifier.train(train_set)
-
+	
 	# 对名字分类，注这里使用了训练时的特征提取器
 	classifier.classify(gender_features('Neo'))
 	classifier.classify(gender_features('Trinity'))
-
+	
 	# 使用测试数据对分类器评分
 	nltk.classify.accuracy(classifier, test_set)
-
+	
 	# 查看前5个特征在分类时的贡献
 	classifier.show_most_informative_features(5)
 
@@ -1236,14 +1318,14 @@ Once an initial set of features has been chosen, a very productive method for re
 	train_names = labeled_names[1500:]
 	devtest_names = labeled_names[500:1500]
 	test_names = labeled_names[:500]
-
+	
 	train_set = [(gender_features(n), gender) for (n, gender) in train_names]
 	devtest_set = [(gender_features(n), gender) for (n, gender) in devtest_names]
 	test_set = [(gender_features(n), gender) for (n, gender) in test_names]
-
+	
 	classifier = nltk.NaiveBayesClassifier.train(train_set)
 	nltk.classify.accuracy(classifier, devtest_set)
-
+	
 	# 利用开发测试集统计分类器预测错误的情况
 	errors = []
 	for (name, label) in devtest_names:
@@ -1252,7 +1334,7 @@ Once an initial set of features has been chosen, a very productive method for re
 			errors.append((label, guess, name))
 	for (label, guess, name) in sorted(errors):
 		print('correct={:8} guess={:<8s} name={:<30}'.format(label, guess, name))
-
+	
 	# 根据上述错误分析对特征提取器进行改进，并重复错误分析过程
 	def gender_features(word):
 		return {
@@ -1268,27 +1350,27 @@ NLTK自带的语料库中含有文档分类信息，利用这些信息可以构�
 
 	import random
 	from nltk.corpus import movie_reviews
-
+	
 	# feature extractor
 	# 以文档中是否含有文本集中高频的2000单词作为特征集
-
+	
 	word_features = list(nltk.FreqDist(w.lower() for w in movie_reviews.words()))[:2000] # 2000 most frequent words as feature-words
-
+	
 	def document_features(document):
 		document = set(document) # set faster than list to check if contains a element
 		features = {}
 		for w in word_features:
 			features['contains({})'.format(w)] = (w in document)
 		return features
-
+	
 	# build (document-words, label)
 	documents = [(list(movie_reviews.words(fileid)), category) for category in movie_reviews.categories() for fileid in movie_reviews.fileids(category)] # 'pos' and 'neg' categories
 	random.shuffle(documents)
-
+	
 	# build (featureset, label), and split into trainingt/test set
 	featuresets = [(document_features(document), label) for (document, label) in documents]
 	train_set, test_set = featuresets[:100], featuresets[100:]
-
+	
 	# build classifier
 	classifier = nltk.NaiveBayesClassifier(train_set)
 	nltk.classify.accuracy(classifier, test_set)
@@ -1309,17 +1391,17 @@ NLTK自带的语料库中含有文档分类信息，利用这些信息可以构�
 		fd[word[-2:]] += 1
 		fd[word[-3:]] += 1
 	common_suffixes = [suffix for (suffix, count) in fd.most_common(100)]
-
+	
 	def pos_features(word):
 		features = {}
 		for suffix in common_suffixes:
 			features['endswith({})'.format(suffix)] = word.lower().endswith(suffix)
-
+	
 	# build (featureset, label) and split into train/test set
 	featuresets = [(pos_features(n), g) for (n,g) in brown.tagged_words(categories='news')]
 	size = int(len(featuresets) * 0.1)
 	train_set, test_set = featuresets[size:], featuresets[:size]
-
+	
 	# build DecisionTreeClassifier
 	classifier = nltk.DecisionTreeClassifier.train(train_set)
 	classifier.classify(pos_features('cats'))
@@ -1342,12 +1424,12 @@ By augmenting the feature extraction function, we could modify this part-of-spee
 
 	tagged_sents = brown.tagget_sents(categories='news')
 	featuresets = []
-
+	
 	for tagged_sent in tagged_sents:
 		untagged_sent = nltk.tag.untag(tagged_sent)
 		for i, (word, tag) in enumerate(tagged_sent):
 			featuresets.append((pos_features(untagged_sent, i), tag))
-
+	
 	size = int(len(featuresets) * 0.1)
 	train_set, test_set = featuresets[size:], featuresets[:size]
 	classifier = nltk.NaiveBayesClassifier.train(train_set)
@@ -1363,39 +1445,39 @@ In order to capture the dependencies between related classification tasks, we ca
 
 	# feature extractor使用了列表history来记录单词sentence[i]之前所有单词的词性，对sentence[i]标注词性时，会参考前一个单词的词性history[i]（至于想要参考前面几个单词的词性取决于设计，另外虽然不能将后续单词词性作为特征，但可以将后续单词作为特征）
 	def pos_features(sentence, i, history):
-         features = {"suffix(1)": sentence[i][-1:],
-                     "suffix(2)": sentence[i][-2:],
-                     "suffix(3)": sentence[i][-3:]}
-         if i == 0:
-             features["prev-word"] = "<START>"
-             features["prev-tag"] = "<START>"
-         else:
-             features["prev-word"] = sentence[i-1]
-             features["prev-tag"] = history[i-1]
-         return features
-
-    class ConsecutivePosTagger(nltk.TaggerI):
-
-        def __init__(self, train_sents):
-            train_set = []
-            for tagged_sent in train_sents:
-                untagged_sent = nltk.tag.untag(tagged_sent)
-                history = []
-                for i, (word, tag) in enumerate(tagged_sent):
-                    featureset = pos_features(untagged_sent, i, history)
-                    train_set.append( (featureset, tag) )
-                    history.append(tag)
-            self.classifier = nltk.NaiveBayesClassifier.train(train_set)
-
-        def tag(self, sentence):
+	     features = {"suffix(1)": sentence[i][-1:],
+	                 "suffix(2)": sentence[i][-2:],
+	                 "suffix(3)": sentence[i][-3:]}
+	     if i == 0:
+	         features["prev-word"] = "<START>"
+	         features["prev-tag"] = "<START>"
+	     else:
+	         features["prev-word"] = sentence[i-1]
+	         features["prev-tag"] = history[i-1]
+	     return features
+	
+	class ConsecutivePosTagger(nltk.TaggerI):
+	
+	    def __init__(self, train_sents):
+	        train_set = []
+	        for tagged_sent in train_sents:
+	            untagged_sent = nltk.tag.untag(tagged_sent)
+	            history = []
+	            for i, (word, tag) in enumerate(tagged_sent):
+	                featureset = pos_features(untagged_sent, i, history)
+	                train_set.append( (featureset, tag) )
+	                history.append(tag)
+	        self.classifier = nltk.NaiveBayesClassifier.train(train_set)
+	
+	    def tag(self, sentence):
 			# 不仅仅训练时要使用feature extractor，对文本分类时也要使用feature extractor将input转换为featureset
-            history = []
-            for i, word in enumerate(sentence):
-                featureset = pos_features(sentence, i, history)
-                tag = self.classifier.classify(featureset)
-                history.append(tag)
-            return zip(sentence, history)
-
+	        history = []
+	        for i, word in enumerate(sentence):
+	            featureset = pos_features(sentence, i, history)
+	            tag = self.classifier.classify(featureset)
+	            history.append(tag)
+	        return zip(sentence, history)
+	
 	tagged_sents = brown.tagged_sents(categories='news')
 	size = int(len(tagged_sents) * 0.1)
 	train_sents, test_sents = tagged_sents[size:], tagged_sents[:size]
@@ -1413,64 +1495,64 @@ Sentence segmentation can be viewed as a classification task for punctuation: wh
 
 	# corpus data
 	sents = nltk.corpus.treebank_raw.sents()
-    tokens = []
-    boundaries = []
-    offset = 0
-    for sent in sents:
-        tokens.extend(sent)
-        offset += len(sent)
+	tokens = []
+	boundaries = []
+	offset = 0
+	for sent in sents:
+	    tokens.extend(sent)
+	    offset += len(sent)
 		# store sentence boundary index
-        boundaries.append(offset-1)
-
+	    boundaries.append(offset-1)
+	
 	# feature extractor, how to description sentence's puncation
-    def punct_features(tokens, i):
-        return {
-            'next-word-capitalized': tokens[i+1][0].isupper(),
-            'prev-word': tokens[i-1].lower(),
-            'punct': tokens[i],
-            'prev-word-is-one-char': len(tokens[i-1]) == 1
-        }
+	def punct_features(tokens, i):
+	    return {
+	        'next-word-capitalized': tokens[i+1][0].isupper(),
+	        'prev-word': tokens[i-1].lower(),
+	        'punct': tokens[i],
+	        'prev-word-is-one-char': len(tokens[i-1]) == 1
+	    }
 	
 	# build featuresets and split into train set and test set
-    featuresets = [(punct_features(tokens, i), (i in boundaries)) for i in range(1, len(tokens)-1) if tokens[i] in '.?!']
-    size = int(len(featuresets) * 0.1)
-    train_set, test_set = featuresets[size:], featuresets[:size]
-    
+	featuresets = [(punct_features(tokens, i), (i in boundaries)) for i in range(1, len(tokens)-1) if tokens[i] in '.?!']
+	size = int(len(featuresets) * 0.1)
+	train_set, test_set = featuresets[size:], featuresets[:size]
+	
 	classifier = nltk.NaiveBayesClassifier.train(train_set)
-    nltk.classify.accuracy(classifier, test_set)
-
+	nltk.classify.accuracy(classifier, test_set)
+	
 	# sentence segmentation using the above classifier
-    def segment_sentences(words):
-        start = 0
-        sents = []
-        for i, word in enumerate(words):
-            if word in '.?!' and classifier.classify(punct_features(words, i)) == True:
-                sents.append(words[start:i+1])
-                start = i+1
-        if start < len(words):
-            sents.append(words[start:])
-        return sents
+	def segment_sentences(words):
+	    start = 0
+	    sents = []
+	    for i, word in enumerate(words):
+	        if word in '.?!' and classifier.classify(punct_features(words, i)) == True:
+	            sents.append(words[start:i+1])
+	            start = i+1
+	    if start < len(words):
+	        sents.append(words[start:])
+	    return sents
 
 ### Identifying Dialogue Act Types
 
 对话工作类型指的是一段文本是表示提问的，回答的，疑问的，欢迎的，声明的等等，在NLTK语料库提供了关于对话动作类型的分类
 
 	# get the xml version of post
-    posts = nltk.corpus.nps_chat.xml_posts()[:10000]
-
-    # feature extractor
-    # 这里假设对话动作类型取决于对话中的单词
-    def dialogue_act_features(post):
-        features = {}
-        for word in nltk.word_tokenize(post):
-            features['contains({})'.format(word.lower())] = True
-        return features
-
-    featuresets = [(dialogue_act_features(post.text), post.get('class')) for post in posts]
-    size = int(len(featuresets) * 0.1)
-    train_set, test_set = featuresets[size:], featuresets[:size]
-    classifier = nltk.NaiveBayesClassifier.train(train_set)
-    print(nltk.classify.accuracy(classifier, test_set))
+	posts = nltk.corpus.nps_chat.xml_posts()[:10000]
+	
+	# feature extractor
+	# 这里假设对话动作类型取决于对话中的单词
+	def dialogue_act_features(post):
+	    features = {}
+	    for word in nltk.word_tokenize(post):
+	        features['contains({})'.format(word.lower())] = True
+	    return features
+	
+	featuresets = [(dialogue_act_features(post.text), post.get('class')) for post in posts]
+	size = int(len(featuresets) * 0.1)
+	train_set, test_set = featuresets[size:], featuresets[:size]
+	classifier = nltk.NaiveBayesClassifier.train(train_set)
+	print(nltk.classify.accuracy(classifier, test_set))
 
 ###  Recognizing Textual Entailment 识别文本含义
 Recognizing textual entailment (RTE) is the task of determining whether a given piece of text T entails another text called the "hypothesis" . It should be emphasized that the relationship between text and hypothesis is not intended to be logical entailment, but rather whether a human would conclude that the text provides reasonable evidence for taking the hypothesis to be true.
@@ -1478,17 +1560,17 @@ Recognizing textual entailment (RTE) is the task of determining whether a given 
 识别文本含义任务，判断给定的一段文本是否隐含着另一个假设文本的含义。应当强调的是，文本和假设之间的关系不是意在是逻辑上的蕴涵，而是一个人是否会得出结论认为文本提供了合理的证据来使假设成为真实。本质上来讲这是一个分类问题，给定(text, hypothesis)为其打标签true或false，要想成功的推断蕴含问题需要复杂的文本，语义分析技术，下面我们对文本进行了简单分析，假设如果hypothesis中表示的所有信息在text中出现了，则蕴含关系成立，如果hypothesis中表示的信息在text中没有出现则不存在蕴含关系
 
 	# feature extractor
-    def rte_features(rtepair):
-        extractor = nltk.RTEFeatureExtractor(rtepair)
-        features = {}
-        # 同时出现的单词数
-        features['word_overlap'] = len(extractor.overlap('word'))
-        # 在hypothesis且不在text中的单词数
-        features['word_hyp_extra'] = len(extractor.hyp_extra('word'))
-        # 统计命名实体的数量，即人名，地名，组织名等单词
-        features['ne_overlap'] = len(extractor.overlap('ne'))
-        features['ne_hyp_extra'] = len(extractor.hyp_extra('ne'))
-        return features
+	def rte_features(rtepair):
+	    extractor = nltk.RTEFeatureExtractor(rtepair)
+	    features = {}
+	    # 同时出现的单词数
+	    features['word_overlap'] = len(extractor.overlap('word'))
+	    # 在hypothesis且不在text中的单词数
+	    features['word_hyp_extra'] = len(extractor.hyp_extra('word'))
+	    # 统计命名实体的数量，即人名，地名，组织名等单词
+	    features['ne_overlap'] = len(extractor.overlap('ne'))
+	    features['ne_hyp_extra'] = len(extractor.hyp_extra('ne'))
+	    return features
 
 ### Scaling Up to Large Datasets
 Python provides an excellent environment for performing basic text processing and feature extraction. However, it is not able to perform the numerically intensive calculations required by machine learning methods nearly as quickly as lower-level languages such as C. Thus, if you attempt to use the pure-Python machine learning implementations (such as nltk.NaiveBayesClassifier) on large datasets, you may find that the learning algorithm takes an unreasonable amount of time and memory to complete.
@@ -1550,9 +1632,9 @@ Information Gain，利用信息增量来选取决策feature，即用来度量根
 
 	import math
 	def entropy(labels):
-    	freqdist = nltk.FreqDist(labels)
-    	probs = [freqdist.freq(l) for l in freqdist]
-    	return -sum(p * math.log(p,2) for p in probs)
+		freqdist = nltk.FreqDist(labels)
+		probs = [freqdist.freq(l) for l in freqdist]
+		return -sum(p * math.log(p,2) for p in probs)
 
 Decision trees have a number of useful qualities. To begin with, they're simple to understand, and easy to interpret. This is especially true near the top of the decision tree, where it is usually possible for the learning algorithm to find very useful features. However, decision trees also have a few disadvantages. One problem is that, since each branch in the decision tree splits the training data, the amount of training data available to train nodes lower in the tree can become quite small. As a result, these lower decision nodes may overfit the training set, learning patterns that reflect idiosyncrasies of the training set rather than linguistically significant patterns in the underlying problem. One solution to this problem is to stop dividing nodes once the amount of training data becomes too small. Another solution is to grow a full decision tree, but then to prune decision nodes that do not improve performance on a dev-test. A second problem with decision trees is that they force features to be checked in a specific order, even when features may act relatively independently of one another. For example, when classifying documents into topics (such as sports, automotive, or murder mystery), features such as hasword(football) are highly indicative of a specific label, regardless of what other the feature values are. Since there is limited space near the top of the decision tree, most of these features will need to be repeated on many different branches in the tree. And since the number of branches increases exponentially as we go down the tree, the amount of repetition can be very large.
 
@@ -1570,27 +1652,27 @@ A related problem is that decision trees are not good at making use of features 
 
 1. 为input（对应features）计算label的可能性大小
 
-	P(label|features)
+   P(label|features)
 
 2. 根据贝叶斯公式有
 
-	P(label|features) = P(features, label)/P(features)
+   P(label|features) = P(features, label)/P(features)
 
 3. 因为对于任意label，P(features)是不会变的，因此欲求最大可能性的label，也即求下式最大值时对应的label
 
-	P(features, label)
+   P(features, label)
 
 4. 根据贝叶斯公式有
 
-	P(features, label) = P(features|label)*P(label)
+   P(features, label) = P(features|label)*P(label)
 
 5. 根据各个feature之间相互独立的假设有
 
-	P(features, label) = P(f1|label)*P(f2|label)...P(label)
+   P(features, label) = P(f1|label)*P(f2|label)...P(label)
 
 6. 从上式可以看出求最可能label的实质就是，根据训练集计算先验概率P(label)，然后乘以每个featrue对该label的可能性贡献P(feature|label)
 
-	
+
 数据平滑技术，因为训练集有限常常出现count(feature, label)等于0的情况，也即某个feature对label的贡献为0，利用上面的公式计算label的可能性结果也为0，即当某个feature对label的贡献在训练集中不可见时，忽略了其它feature对label的贡献。更加形式化的描述：当count(feature, label)较大时，count(feature, label)/count(label)是对P(feature|label)较好的估算方法；当count(feature, label)较小时，count(feature, label)/count(label)对P(feature|label)则不再是好的估算方案，为此需要使用统计中的数据平滑技术来计算P(feature|label)，例如Expected Likelihood Estimation技术，通过为所有feature的count(feature, label)都增加一个数值来消除这个问题
 
 特征值的二值化，有的feature可能有多个离散取值，有的特征值可能有一个连续取值范围，都可以将其转换为二值范围，比如多个离散值的二值形式是：是不是等于某个离散值，连续范围则可以通过binning来将取值转换到区间中，此外连续值也可以使用分布函数来估算其可能性
@@ -1619,7 +1701,7 @@ Most models that are automatically constructed from a corpus are descriptive mod
 
 	import re
 	import nltk
-
+	
 	fd = nltk.FreqDist(i for word in nltk.corpus.words.words('en') for i in re.findall(r'[aeiou]{2,}', word))
 
 英文单词通常是冗余的，一般来说去掉单词中间（单词开头和尾部的元音字母不能去掉）的元音字母也不会影响阅读，下面是一个对文本去冗余的程序
@@ -1630,7 +1712,7 @@ Most models that are automatically constructed from a corpus are descriptive mod
 		regexp = r'^[AEIOUaeiou]+|[AEIOUaeiou]+$|[^AEIOUaeiou]+'
 		pieces = re.findall(regexp, word)
 		return ''.join(pieces)
-
+	
 	english_udhr = nltk.corpus.udhr.words('English-Latin1')
 	print(nltk.tokenwrap(compress(w) for w in english_udhr[:75]))
 
@@ -1642,7 +1724,7 @@ Most models that are automatically constructed from a corpus are descriptive mod
 		regexp = r'^(.*?)(ing|ly|ed|ious|ies|ive|es|s|ment)?$'
 		stem, suffix = re.findall(regexp, word)[0]
 		return stem
-
+	
 	raw = 'government moving proxies happily'
 	[stem(word) for word in nltk.word_tokenize(raw)]
 
@@ -1661,7 +1743,7 @@ Most models that are automatically constructed from a corpus are descriptive mod
 	        self._stemmer = stemmer
 	        self._index = nltk.Index((self._stem(word), i)
 	                                 for (i, word) in enumerate(text))
-
+	
 	    def concordance(self, word, width=40):
 	        key = self._stem(word)
 	        wc = int(width/4)                # words of context
@@ -1671,7 +1753,7 @@ Most models that are automatically constructed from a corpus are descriptive mod
 	            ldisplay = '{:>{width}}'.format(lcontext[-width:], width=width)
 	            rdisplay = '{:{width}}'.format(rcontext[:width], width=width)
 	            print(ldisplay, rdisplay)
-
+	
 	    def _stem(self, word):
 	        return self._stemmer.stem(word).lower()
 
@@ -1693,13 +1775,13 @@ Most models that are automatically constructed from a corpus are descriptive mod
 	        for word in words:                                        # for each word
 	            print('{:6}'.format(cfdist[category][word]), end=' ') # print table cell
 	        print()                                                   # end the row
-
+	
 	from nltk.corpus import brown
 	cfd = nltk.ConditionalFreqDist(
 		(genre, word)
 		for genre in brown.categories()
 		for word in brown.words(categories=genre))
-
+	
 	genres = ['news', 'religion', 'hobbies', 'science_fiction', 'romance', 'humor']
 	modals = ['can', 'could', 'may', 'might', 'must', 'will']
 	tabulate(cfd, modals, genres)
@@ -1751,7 +1833,7 @@ n-grams提取文本中相邻词对
 	nltk.bigrams(text)
 	nltk.trigrams(text)
 	nltk.ngrams(text, n)
-
+	
 	n = 3
 	[text[i:i+n] for i range(len(text)-n+1)]
 
@@ -1765,7 +1847,7 @@ trie树
 	        insert(trie[first], rest, value)
 	    else:
 	        trie['value'] = value
-
+	
 	trie = {}
 	insert(trie, 'chat', 'cat')
 	insert(trie, 'name', 'wen')
@@ -1777,16 +1859,16 @@ trie树
 	    contents = re.sub(r'<.*?>', ' ', contents)
 	    contents = re.sub('\s+', ' ', contents)
 	    return contents
-
+	
 	def snippet(doc, term):
 	    text = ' '*30 + raw(doc) + ' '*30
 	    pos = text.index(term)
 	    return text[pos-30:pos+30]
-
+	
 	print("Building Index...")
 	files = nltk.corpus.movie_reviews.abspaths()
 	idx = nltk.Index((w, f) for f in files for w in raw(f).split())
-
+	
 	query = ''
 	while query != "quit":
 	    query = input("query> ")     # use raw_input() in Python 2
@@ -1813,9 +1895,9 @@ trie树
 
 	from numpy import arange
 	from matplotlib import pyplot
-
+	
 	colors = 'rgbcmyk' # red, green, blue, cyan, magenta, yellow, black
-
+	
 	def bar_chart(categories, words, counts):
 	    "Plot a bar chart showing counts for each word by category"
 	    ind = arange(len(words))
@@ -1830,7 +1912,7 @@ trie树
 	    pyplot.ylabel('Frequency')
 	    pyplot.title('Frequency of Six Modal Verbs by Genre')
 	    pyplot.show()
-
+	
 	genres = ['news', 'religion', 'hobbies', 'government', 'adventure']
 	modals = ['can', 'could', 'may', 'might', 'must', 'will']
 	cfdist = nltk.ConditionalFreqDist(
@@ -1849,26 +1931,26 @@ trie树
 	import networkx as nx
 	import matplotlib
 	from nltk.corpus import wordnet as wn
-
+	
 	def traverse(graph, start, node):
 	    graph.depth[node.name] = node.shortest_path_distance(start)
 	    for child in node.hyponyms():
 	        graph.add_edge(node.name, child.name)
 	        traverse(graph, start, child)
-
+	
 	def hyponym_graph(start):
 	    G = nx.Graph()
 	    G.depth = {}
 	    traverse(G, start, start)
 	    return G
-
+	
 	def graph_draw(graph):
 	    nx.draw_graphviz(graph,
 	         node_size = [16 * graph.degree(n) for n in graph],
 	         node_color = [graph.depth[n] for n in graph],
 	         with_labels = False)
 	    matplotlib.pyplot.show()
-
+	
 	dog = wn.synset('dog.n.01')
 	graph = hyponym_graph(dog)
 	graph_draw(graph)
@@ -1876,8 +1958,8 @@ trie树
 查找各个词性使用最多的单词
 
 	def findtags(tag_prefix, tagged_text):
-    	cfd = nltk.ConditionalFreqDist((tag, word) for (word, tag) in tagged_text if tag.startswith(tag_prefix))
-    	
+		cfd = nltk.ConditionalFreqDist((tag, word) for (word, tag) in tagged_text if tag.startswith(tag_prefix))
+		
 		return dict((tag, cfd[tag].most_common(5)) for tag in cfd.conditions())
 	
 	tagdict = findtags('NN', nltk.corpus.brown.tagged_words(categories='news')) # 名词类型的词性NN$表示所有格，NNS表示复数，NNP表示专有名词
@@ -1899,7 +1981,7 @@ trie树
 	v1000 = [w for (w, _) in nltk.FreqDist(alice).most_common(1000)]
 	for w in v1000:
 		mapping[w] = w
-
+	
 	[mapping[w] for w in alice]
 
 统计不同词性的频率
@@ -1940,21 +2022,21 @@ trie树
 	brown_news_tagged = brown.tagged_words(categories='news', tagset='universal')
 	for ((w1, t1), (w2, t2)) in nltk.bigrams(brown_news_tagged):
 		pos[(t1, w2)][t2] += 1
-
+	
 	pos[('DET', 'right')] # 由结果可知，当单词right前面是冠词时
 
 构建反转字典
 
 	dict((value, key) for (key, value) in d.items()) # 仅当键值对一一对应时适用
-	
+
 	# 支持多个键对应同一值的反转
 	from collections import defaultdict
 	rd = defaultdict(list)
 	for k, v in d.items()
 		rd[v].append(k)
-
+	
 	# NLTK 自带的索引表
 	rd = nltk.Index((value, key) for (key, value) in d.items())
 
 
-	
+​	

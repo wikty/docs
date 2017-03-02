@@ -1,22 +1,36 @@
-## Splash
-Splash 是用来渲染javascript的轻量级浏览器，通过附带的HTTP API可以便利的使用Splash的渲染服务。
+---
+title: 轻量级浏览器Splash
+author: Xiao Wenbin
+date: 2016/12/03
+category: splash
+tags: javascript, browser
+---
 
-### 安装
+## Splash
+
+Splash 是用来渲染javascript的轻量级浏览器，并可以通过附带的HTTP API来使用渲染服务。
+
+### 安装运行
 
 1. 安装docker
 2. 拉取splash镜像：`docker pull scrapinghub/splash`
 3. 运行splash实例：`docker run -p 8050:8050 scrapinghub/splash`
 4. 现在可以通过本地<http://localhost:8050>来访问splash的HTTP API服务
 
-多接口启动splash：
+## 多接口启动
 
-	`docker run -p 5023:5023 -p 8050:8050 -p 8051:8051 scrapinghub/splash`
+splash可以通过http，https等接口方式来提供服务，多接口启动splash：
 
-可以在端口5023使用telnet访问，端口8050使用http访问，端口8051使用https访问
+```
+docker run -p 5023:5023 -p 8050:8050 -p 8051:8051 scrapinghub/splash
+```
 
-### 服务
 
-Splash服务可以通过HTTP API访问，API参数通过GET或者POST JSON来发送给splash实例
+*注*：端口5023供telnet访问，端口8050供http访问，端口8051供https访问
+
+### 常见服务
+
+splash服务可以通过HTTP API访问，API参数通过GET或者POST JSON来发送
 
 #### render.html
 
@@ -41,4 +55,3 @@ Splash服务可以通过HTTP API访问，API参数通过GET或者POST JSON来发
 #### 在页面环境中执行自定义javascript
 
 splash除了执行页面中的javascript外，还可以执行通过接口参数传递自定义javascript，这些代码将在页面加载完成后且页面开始渲染前执行，这样就允许我们使用自定义javascript来修改页面内容
-

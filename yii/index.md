@@ -1,115 +1,121 @@
-服务器配置
-1. yii自带服务器
-在yii项目根目录下运行：php yii serve，可在本地8080端口访问，或者指定端口php yii serve --port=8888
+---
+title: Yii手册
+author: Xiao Wenbin
+date: 2016/10/09
+categories: web, php, yii
+---
 
-2. apache配置
-# 配置内容一般放在虚拟主机配置文件中
-# 设置文档根目录为 “basic/web”
-DocumentRoot "path/to/basic/web"
+## 服务器配置
+1. Yii自带服务器
 
-<Directory "path/to/basic/web">
-    # 开启 mod_rewrite 用于美化 URL 功能的支持（译注：对应 pretty URL 选项）
-    RewriteEngine on
-    # 如果请求的是真实存在的文件或目录，直接访问
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-    # 如果请求的不是真实文件或目录，分发请求至 index.php
-    RewriteRule . index.php
+   Yii自带服务器是一个简单的web服务器，不需要进行任何配置即可使用。yii项目根目录下运行：`php yii serve` ，即可在本地`http://localhost:8080`访问yii项目，或者可以指定运行端口`php yii serve --port=8888`
 
-    # ...其它设置...
-</Directory>
+2. Apache服务器
 
-3. nginx配置（需要额外安装fcgi）
-# nginx的配置
-server {
-    charset utf-8;
-    client_max_body_size 128M;
+   假设Yii项目可访问根目录为`basic/web`，相应apache服务器配置内容（配置内容要写入虚拟主机配置文件）如下：
 
-    listen 80; ## listen for ipv4
-    #listen [::]:80 default_server ipv6only=on; ## listen for ipv6
+        DocumentRoot "path/to/basic/web"
+        <Directory "path/to/basic/web">
+            # 开启 mod_rewrite 用于美化 URL 功能的支持（对应 pretty URL 选项）
+            RewriteEngine on
+            # 如果请求的是真实存在的文件或目录，直接访问
+            RewriteCond %{REQUEST_FILENAME} !-f
+            RewriteCond %{REQUEST_FILENAME} !-d
+            # 如果请求的不是真实文件或目录，分发请求至 index.php
+            RewriteRule . index.php
+       
+            # ...其它设置...
+        </Directory>
 
-    server_name mysite.local;
-    root        /path/to/basic/web;
-    index       index.php;
+3. Nginx服务器（需要额外安装fcgi）
+   要在Nginx下运行PHP脚本需要安装`fcgi`，此外需要将以下配置内容写入到Nginx配置文件中：
 
-    access_log  /path/to/basic/log/access.log;
-    error_log   /path/to/basic/log/error.log;
+        server {
+            charset utf-8;
+            client_max_body_size 128M;
+       
+            listen 80; ## listen for ipv4
+            #listen [::]:80 default_server ipv6only=on; ## listen for ipv6
+       
+            server_name mysite.local;
+            root        /path/to/basic/web;
+            index       index.php;
+       
+            access_log  /path/to/basic/log/access.log;
+            error_log   /path/to/basic/log/error.log;
+       
+            location / {
+                # Redirect everything that isn't a real file to index.php
+                try_files $uri $uri/ /index.php$is_args$args;
+            }
+       
+            # uncomment to avoid processing of calls to non-existing static files by Yii
+            #location ~ \.(js|css|png|jpg|gif|swf|ico|pdf|mov|fla|zip|rar)$ {
+            #    try_files $uri =404;
+            #}
+            #error_page 404 /404.html;
+       
+            location ~ \.php$ {
+                include fastcgi_params;
+                fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+                #fastcgi_param HTTPS on;当运行一个 HTTPS 服务器时，配置该项后yii才能知道是https
+                fastcgi_pass   127.0.0.1:9000;
+                #fastcgi_pass unix:/var/run/php5-fpm.sock;
+                try_files $uri =404;
+            }
+       
+            location ~ /\.(ht|svn|git) {
+                deny all;
+            }
+        }
 
-    location / {
-        # Redirect everything that isn't a real file to index.php
-        try_files $uri $uri/ /index.php$is_args$args;
-    }
+同时需要对PHP进行配置，将以下内容写入`php.ini`文件：
 
-    # uncomment to avoid processing of calls to non-existing static files by Yii
-    #location ~ \.(js|css|png|jpg|gif|swf|ico|pdf|mov|fla|zip|rar)$ {
-    #    try_files $uri =404;
-    #}
-    #error_page 404 /404.html;
+	cgi.fix_pathinfo=0 # 能避免掉很多不必要的 stat() 系统调用
+## 应用目录结构
 
-    location ~ \.php$ {
-        include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        #fastcgi_param HTTPS on;当运行一个 HTTPS 服务器时，配置该项后yii才能知道是https
-        fastcgi_pass   127.0.0.1:9000;
-        #fastcgi_pass unix:/var/run/php5-fpm.sock;
-        try_files $uri =404;
-    }
+    basic/                  应用根目录
+        composer.json       Composer 配置文件, 描述包信息，主要是应用程序依赖第三方包的描述信息
+        config/             包含应用配置及其它配置
+            console.php     控制台应用配置信息
+            web.php         Web 应用配置信息
+        commands/           包含控制台命令类
+        controllers/        包含控制器类
+        models/             包含模型类
+        runtime/            包含 Yii 在运行时生成的文件，例如日志和缓存文件
+        vendor/             包含已经安装的 Composer 包，包括 Yii 框架自身
+        views/              包含视图文件
+        web/                Web 应用根目录，包含 Web 入口文件，服务器将此处配置为web唯一入口
+            assets/         包含 Yii 发布的资源文件（javascript 和 css）
+            index.php       应用入口文件
+        yii                 Yii 控制台命令执行脚本，用来执行应用程序的后台任务，需要有执行权限，通过./yii <route> [arguments] [options]运行
 
-    location ~ /\.(ht|svn|git) {
-        deny all;
-    }
-}
-# php.ini的配置
-cgi.fix_pathinfo=0 ， 能避免掉很多不必要的 stat() 系统调用
+## 应用实例的生命周期
 
+1. 入口脚本加载应用实例的配置数组
+2. 入口脚本创建一个应用实例
+   1. 调用 `yii\base\Application::preInit()` 配置几个高级别应用主体属性， 比如`yii\base\Application::basePath`
+   2. 注册 `yii\base\Application::errorHandler` 错误处理方法
+   3. 配置应用实例
+   4. 调用 `yii\base\Application::init()` 初始化， 该函数会调用 `yii\base\Application::bootstrap()` 运行引导启动组件
+3. 入口脚本调用 `yii\base\Application::run()` 运行应用实例
+4. 触发 `yii\base\Application::EVENT_BEFORE_REQUEST` 事件
+5. 处理请求：解析请求、路由以及相关参数；创建路由指定的模块（module）、控制器（controller）和操作（action）对应的类，并运行操作（action）
+6. 触发 `yii\base\Application::EVENT_AFTER_REQUEST` 事件
+7. 发送响应到用户
+8. 入口脚本接收应用实例传来的退出状态并完成请求的处理
 
+## 请求的生命周期
 
-应用目录结构
-basic/                  应用根目录
-    composer.json       Composer 配置文件, 描述包信息，主要是应用程序依赖第三方包的描述信息
-    config/             包含应用配置及其它配置
-        console.php     控制台应用配置信息
-        web.php         Web 应用配置信息
-    commands/           包含控制台命令类
-    controllers/        包含控制器类
-    models/             包含模型类
-    runtime/            包含 Yii 在运行时生成的文件，例如日志和缓存文件
-    vendor/             包含已经安装的 Composer 包，包括 Yii 框架自身
-    views/              包含视图文件
-    web/                Web 应用根目录，包含 Web 入口文件，服务器将此处配置为web唯一入口
-        assets/         包含 Yii 发布的资源文件（javascript 和 css）
-        index.php       应用入口文件
-    yii                 Yii 控制台命令执行脚本，用来执行应用程序的后台任务，需要有执行权限，通过./yii <route> [arguments] [options]运行
-
-
-请求生命周期
-    用户向入口脚本 web/index.php 发起请求。
-    入口脚本加载应用配置 并创建一个应用实例(Application)去处理请求（需要协调各个components来完成任务）。应用实例在请求周期内全局可访问（\Yii::$app），另外一个应用可以由多个modules（含完成MVC的包）组成
-    应用通过请求组件(request component) 解析请求的路由。
-    应用创建一个相应的控制器实例(controler)去处理请求。
-    控制器创建一个操作实例(action)并针对操作执行过滤器(filter)。
-    如果任何一个过滤器返回失败，则操作退出。
-    如果所有过滤器都通过，操作将被执行。
-    操作会加载一个数据模型(model)，或许是来自数据库。
-    操作会渲染一个视图(view: widget, asset bundle)，把数据模型提供给它。
-    渲染结果返回给响应组件(response componet)。
-    响应组件发送渲染(render view)结果给用户浏览器。
-
-应用实例生命周期
-
-    入口脚本加载应用主体配置数组。
-    入口脚本创建一个应用主体实例：
-        调用 yii\base\Application::preInit() 配置几个高级别应用主体属性， 比如yii\base\Application::basePath。
-        注册 yii\base\Application::errorHandler 错误处理方法.
-        配置应用主体属性.
-        调用 yii\base\Application::init() 初始化， 该函数会调用 yii\base\Application::bootstrap() 运行引导启动组件.
-    入口脚本调用 yii\base\Application::run() 运行应用主体:
-        触发 yii\base\Application::EVENT_BEFORE_REQUEST 事件。
-        处理请求：解析请求 路由 和相关参数； 创建路由指定的模块、控制器和动作对应的类，并运行动作。
-        触发 yii\base\Application::EVENT_AFTER_REQUEST 事件。
-        发送响应到终端用户.
-    入口脚本接收应用主体传来的退出状态并完成请求的处理。
-
+1. 用户向入口脚本 `web/index.php` 发起请求
+2. 入口脚本加载应用配置并创建一个应用实例(Application)去处理请求（需要协调各个components来完成任务）。应用实例在请求周期内全局可访问（`\Yii::$app`）
+3. 应用通过请求组件(request component)来解析请求的路由信息以及相关请求参数
+4. 应用创建一个跟路由对应的控制器实例(controler)去处理请求
+5. 控制器实例创建一个操作实例(action)并针对操作执行过滤器(filter)。如果任何一个过滤器返回失败，则操作退出；如果所有过滤器都通过，操作将被执行
+6. 操作加载一个数据模型(model)，数据模型从数据库中加载数据
+7. 操作渲染一个视图(view: widget, asset bundle)，并把数据模型提供给它
+8. 渲染结果返回给响应组件(response componet)
+9. 响应组件发送渲染(render view)结果给用户
 
 
 Yii的MVC
@@ -175,13 +181,13 @@ $model = new User(['scenario' => 'login'])
 模型对应的可选场景，在定义模型时的验证规则中给出，或者通过重写scenarios()方法来自定义可选场景
 scenarios() 方法默认实现会返回所有yii\base\Model::rules()方法申明的验证规则中的场景
 	public function scenarios()
-    {
-        $scenarios = parent::scenarios(); // 默认场景
-        // 新添加场景
-        $scenarios[self::SCENARIO_LOGIN] = ['username', 'password']; // 当前场景下的活动属性
-        $scenarios[self::SCENARIO_REGISTER] = ['username', 'email', 'password'];
-        return $scenarios;
-    }
+	{
+	    $scenarios = parent::scenarios(); // 默认场景
+	    // 新添加场景
+	    $scenarios[self::SCENARIO_LOGIN] = ['username', 'password']; // 当前场景下的活动属性
+	    $scenarios[self::SCENARIO_REGISTER] = ['username', 'email', 'password'];
+	    return $scenarios;
+	}
 调用 yii\base\Model::validate() 来验证接收到的数据， 该方法使用yii\base\Model::rules()申明的验证规则来验证每个相关属性， 如果没有找到错误，会返回 true， 否则它会将错误保存在 yii\base\Model::errors 属性中并返回false
 重写rules方法为模型的属性指定验证规则
 public function rules() {
@@ -208,10 +214,10 @@ public function fields()
     return [
         // 字段名和属性名相同
         'id',
-
+    
         // 字段名为 "email"，对应属性名为 "email_address"
         'email' => 'email_address',
-
+    
         // 字段名为 "name", 值通过PHP代码返回
         'name' => function () {
             return $this->first_name . ' ' . $this->last_name;
@@ -227,13 +233,13 @@ public function fields()
 
     // 去掉一些包含敏感信息的字段
     unset($fields['auth_key'], $fields['password_hash'], $fields['password_reset_token']);
-
+    
     return $fields;
 }
 
 
 
- 
+
 控制器
 在设计良好的应用中，控制器很精练，包含的操作代码简短； 如果你的控制器很复杂，通常意味着需要重构
 从应用主体接管控制后会分析请求数据并传送到模型， 传送模型结果到视图， 最后生成输出响应信息
@@ -250,7 +256,7 @@ public function actions()
     return [
         // 用类来申明"error" 操作
         'error' => 'yii\web\ErrorAction',
-
+    
         // 用配置数组申明 "view" 操作
         'view' => [
             'class' => 'yii\web\ViewAction',
@@ -276,13 +282,13 @@ class HelloWorldAction extends Action
 控制器中的默认操作是index，如果想要重写的话，在控制器内定义属性$defaultAction = 'actionName';
 
 控制器的生命周期
-	
+​	
 	在控制器创建和配置后，yii\base\Controller::init() 方法会被调用。
 	控制器根据请求操作ID创建一个操作对象:
-    如果操作ID没有指定，会使用yii\base\Controller::defaultAction默认操作ID；
-    如果在yii\base\Controller::actions()找到操作ID， 会创建一个独立操作；
-    如果操作ID对应操作方法，会创建一个内联操作；
-    否则会抛出yii\base\InvalidRouteException异常。
+	如果操作ID没有指定，会使用yii\base\Controller::defaultAction默认操作ID；
+	如果在yii\base\Controller::actions()找到操作ID， 会创建一个独立操作；
+	如果操作ID对应操作方法，会创建一个内联操作；
+	否则会抛出yii\base\InvalidRouteException异常。
 
 控制器按顺序调用应用主体、模块（如果控制器属于模块）、 控制器的 beforeAction() 方法；
 
@@ -301,9 +307,9 @@ class HelloWorldAction extends Action
 
 入口脚本定义全局内容
 	yii定义的全局常量
-    YII_DEBUG：标识应用是否运行在调试模式。当在调试模式下， 应用会保留更多日志信息，如果抛出异常，会显示详细的错误调用堆栈。 因此，调试模式主要适合在开发阶段使用，YII_DEBUG 默认值为 false。
-    YII_ENV：标识应用运行的环境， 详情请查阅配置章节。 YII_ENV 默认值为 'prod'，表示应用运行在线上产品环境。
-    YII_ENABLE_ERROR_HANDLER：标识是否启用 Yii 提供的错误处理， 默认为 true。
+	YII_DEBUG：标识应用是否运行在调试模式。当在调试模式下， 应用会保留更多日志信息，如果抛出异常，会显示详细的错误调用堆栈。 因此，调试模式主要适合在开发阶段使用，YII_DEBUG 默认值为 false。
+	YII_ENV：标识应用运行的环境， 详情请查阅配置章节。 YII_ENV 默认值为 'prod'，表示应用运行在线上产品环境。
+	YII_ENABLE_ERROR_HANDLER：标识是否启用 Yii 提供的错误处理， 默认为 true。
 
 
 应用实例属性
@@ -336,11 +342,11 @@ vendorPath 默认@app/vendor
     'on beforeRequest' => function ($event) {
         // ... 应用实例触发
     },
-
+    
     'on afterRequest' => function ($event) {
         // ... 应用实例触发
     },
-
+    
     'on beforeAction' => function ($event) {
     	// 应用实例，模块，控制器均会触发
         if (some condition) {
@@ -348,7 +354,7 @@ vendorPath 默认@app/vendor
         } else {
         }
     },
-
+    
     'on afterAction' => function ($event) {
     	// // 控制器，模块，应用实例均会触发
         if (some condition) {
@@ -456,16 +462,16 @@ $module = \Yii::$app->controller->module;
 
 模块可无限级嵌套，也就是说，模块可以包含另一个包含模块的模块， 我们称前者为父模块，后者为子模块， 子模块必须在父模块的yii\base\Module::modules属性中申明
 	public function init()
-    {
-        parent::init();
-
-        $this->modules = [
-            'admin' => [
-                // 此处应考虑使用一个更短的命名空间
-                'class' => 'app\modules\forum\modules\admin\Module',
-            ],
-        ];
-    }
+	{
+	    parent::init();
+	
+	    $this->modules = [
+	        'admin' => [
+	            // 此处应考虑使用一个更短的命名空间
+	            'class' => 'app\modules\forum\modules\admin\Module',
+	        ],
+	    ];
+	}
 
 
 过滤器
