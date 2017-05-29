@@ -1,9 +1,0 @@
-td-agent
-
-Treasure Data is the first cloud service for the entire data pipeline, including acquisition, storage, and analysis. We manage and support the entire infrastructure so you can focus on what you do best, analyzing data, rather than managing it.
-
-fluentd
-
-Fluentd is an open source data collector, which lets you unify the data collection and consumption for a better use and understanding of data.
-
-

@@ -3,7 +3,242 @@
 
 可以从这里[下载](https://github.com/jgm/pandoc/releases/download/1.19/pandoc-1.19-windows.msi)，另外转换PDF需要安装[LaTeX](http://miktex.org/)
 
+## Pandoc扩展Markdown语法
+
+### 脚注
+
+* 注脚语法
+
+  ```markdown
+  这是一个脚注参考[^1]，这是另外一个脚注参考[^longnote]
+
+  [^1]: 这是脚注内容。
+
+  [^longnote]: 这是含有多个块内容的脚注。
+
+      紧跟在脚注之后缩进一个tab的段落被认为属于前面的脚注。缩进的段落可以只缩进第一行，或者缩进段落的每一行内容。
+
+          属于前面注脚的代码需要缩进两个tab
+
+  这里的内容并没有缩进，所以不属于前面的注脚了
+  ```
+
+### 表格
+
+* 表格标题
+
+  ```markdown
+     Left     Right
+  -------     ------
+       12     12
+      123     123
+        1     1
+
+  Table: 这里是表格标题。
+  ```
+
+  以`Table:`或者`:`开头的段落且放在表格之前或者之后的段落会被当做表格标题
+
+* 简单表格语法
+
+  ```markdown
+    右对齐     左对齐     居中    表头太长则默认对齐
+  -------     ------ ----------   -------
+       12     12        12            12
+      123     123       123          123
+        1     1          1             1
+
+  Table:  这是表格标题
+  ```
+
+  表格对齐方式取决于表头内容相对于下方虚线的位置。如果表头内容右对齐于下方虚线，则该列内容右对齐，其它对齐情形与此类似。
+
+  表格用一个空白行表示表格结束。表头行内容可以省去，这样可以创建无表头表格，无表头表格对齐方式取决于单元格内容相对于虚线的对齐方式。
+
+* 多行表格语法
+
+  ```markdown
+  Table: 表格标题也可以是
+  多行的
+
+  -------------------------------------------------------------
+    居中对齐   默认对齐          右对齐 左对齐
+    多行表头   多行表头        多行表头 多行表头
+  ----------- ------- --------------- -------------------------
+     第一       行               12.0  多行
+                                       的内容，后面紧跟空白行
+                                       用来分隔表格行
+
+     第二    	行                5.0 多行
+     								   的内容
+  -------------------------------------------------------------
+
+
+  下面是无表头表格，且该表格只有一行内容
+
+  ----------- ------- --------------- -------------------------
+     第一       行               12.0  即使仅含有一个表格行，后面
+     									用来分隔表格行的空行也要有
+                                       
+  -------------------------------------------------------------
+  Table: 无表头
+  ```
+
+  表格需要一行虚线表示表格的开始；表格行需要用空白行来间隔；表格需要一行虚线和一个空白行表示表格的结束。所谓多行表格指的是单元格内容可以分布在多个行上，但是要注意内容不能跨越到单元格之外。
+
+* 格框表格
+
+  ```markdown
+  : 表格标题
+
+  +---------------+---------------+--------------------+
+  | Fruit         | Price         | Advantages         |
+  +:==============+===============+:==================:+
+  | Bananas       | $1.34         | - built-in wrapper |
+  |               |               | - bright color     |
+  +---------------+---------------+--------------------+
+  | Oranges       | $2.10         | - cures scurvy     |
+  |               |               | - tasty            |
+  +---------------+---------------+--------------------+
+
+  : 无表头
+
+  +--------------:+:--------------+:------------------:+
+  | Right         | Left          | Centered           |
+  +---------------+---------------+--------------------+
+  ```
+
+  表头行和表体内容使用一行等号间隔开，表格开始和结束行以及其它行间隔使用`+---+---+`隔开；列内容使用`|`间隔；单元格中可插入其它markdown语法（段落，代码块，列表等），但不支持跨越单元格。对齐方式通过为表头下面间隔符两端添加`:`来控制，哪边添加`:`则向哪边对齐，两边都添加了则居中对齐。
+
+* 管道表格
+
+  ```markdown
+  | Right | Left | Default | Center |
+  |------:|:-----|---------|:------:|
+  |   12  |  12  |    12   |    12  |
+  |  123  |  123 |   123   |   123  |
+  |    1  |    1 |     1   |     1  |
+
+  : 表格标题
+  ```
+
+  表格两端的`|`是可选的，但用来间隔列内容的`|`是必须有的；对齐方式由表头下面间隔符两端添加`:`来控制，哪边有`:`则向哪边对齐，两边都有则居中对齐；表头行不能省略，要想创建无表头表格，将表头单元格留空即可。表格列使用`|`间隔开，已经很好的可以区分列内容了，因此在书写时不需要可以对齐列内容。单元格内容只允许单行段落，不支持其它markdown语法，当内容太长时，生成的表格会自动换行。
+
+### 列表
+
+* 有序列表语法
+
+  ```markdown
+  下面是markdown标准有序列表语法：
+  以数字开始紧接着一个英文句号，再接一个空格，然后是列表项内容。
+  而且数字顺序跟列表最终生成的数字标号无关，最终生成的列表依次按照1,2,3...标号
+
+  1. one
+  2. two
+  3. three
+
+  pandoc扩展的有序列表语法：
+  将#作为替代数字的符号，生成的列表同上
+
+  #. one
+  #. two
+  #. three
+
+  此外支持大小写英文字母和罗马数字作为列表项标号
+
+  i. roman one
+  ii. roman two
+  iii. roman three
+
+  A.  句号后留有两个空格
+  B.  句号后留有两个空格
+  C.  句号后留有两个空格
+
+  此外还支持括号，右括号来代替英文句号间隔列表项内容
+
+  1) one
+  2) two
+  3) three
+
+  (1) one
+  (2) two
+  (3) three
+  ```
+
+* 定义列表语法
+
+  ```
+  机器学习*可以用行内markdown语法*
+
+  : 定义1第一段内容，也可以用~作为定义的开始
+
+  		第二段内容，缩进两个tab在定义中插入代码
+  	
+  	定义的第三段内容
+
+  : 定义2第一段内容
+  第一段内容的第二行
+
+  	定义的第二段内容
+
+  专业词汇
+  ~ 更加紧凑的定义语法
+  ```
+
+* ​
+
+
+
+
+
+
+
+## Pandoc制作演示文稿
+
+[基于Web的演示文稿](https://en.wikipedia.org/wiki/Web-based_slideshow)比那些通过PowerPoint等软件生成的演示文稿更加灵活，可以让作者将更多精力放在文档内容而不是样式上，而且转换而成的Web演示文稿（Web Slide）是由HTML+Javascript+CSS等内容构成的，可以在任何浏览器上打开。
+
+目前Pandoc支持五种方式生成Web Slide：[S5](http://meyerweb.com/eric/tools/s5/)，[DZSlides](http://paulrouget.com/dzslides/)，[Slidy](https://www.w3.org/Talks/Tools/Slidy2/Overview.html#(1))，[Slideous](http://goessner.net/articles/slideous/)，[reveal.js](https://github.com/hakimel/reveal.js)。其实五种生成方式对应了五种Web Slide解决方案，不同方案演示文稿的表现能力各不相同，下文将着重介绍reveal.js。
+
+我们只需要编写纯文本格式文档，然后就可以使用Pandoc将其转换为富有表现形式的Web Slide。用来制作Slide的文档可以使用任何一种Pandoc支持的标记语言（Markdown、org-mode、reST、Textile等）来编辑。下文中将以Markdown为例。
+
+```
+% Nonsense Stuff
+% John Doe
+% March 22, 2005
+
+# In the morning
+
+## Getting up
+
+- Turn off alarm
+- Get out of bed
+
+## Breakfast
+
+- Eat eggs
+- Drink coffee
+
+# In the evening
+
+## Dinner
+
+- Eat spaghetti
+- Drink wine
+
+------------------
+
+![picture of spaghetti](images/spaghetti.jpg)
+
+## Going to sleep
+
+- Get in bed
+- Count sheep
+```
+
+
+
 ### Pandoc使用方法
+
 Pandoc是一个命令行工具，所以我们需要在命令行环境中使用它
 
 #### 检查是否安装成功
@@ -58,42 +293,11 @@ markdown文件转换为LaTex文件
 
 [参考文章](http://www.cnblogs.com/loongfee/p/3223957.html)
 
-#### 生成基于Web的Slide
-[基于Web的Slide](https://en.wikipedia.org/wiki/Web-based_slideshow)比那些通过PowerPoint等所见即所得软件生成的slide更加容易编辑，且可以将更多的精力放在文档内容而不是样式上，使用Pandoc可以将markdown文档转换为基于Web的Slide
 
-书写HTML幻灯片可以像日常记笔记一样简捷快速。实际上，这些幻灯片本身就是用轻量级标记语言写成的纯文本，你可以用任何一种Pandoc支持的标记语言（Markdown、org-mode、reST、Textile……）来书写其内容。在此以Markdown为例：
 
-	% Nonsense Stuff
-	% John Doe
-	% March 22, 2005
 
-	# In the morning
 
-	## Getting up
-
-	- Turn off alarm
-	- Get out of bed
-
-	## Breakfast
-
-	- Eat eggs
-	- Drink coffee
-
-	# In the evening
-
-	## Dinner
-
-	- Eat spaghetti
-	- Drink wine
-
-	------------------
-
-	![picture of spaghetti](images/spaghetti.jpg)
-
-	## Going to sleep
-
-	- Get in bed
-	- Count sheep
+	
 
 文档开头三行包含元信息：标题，作者，日期
 
@@ -244,10 +448,10 @@ ex=∑n=0∞xnn!=limn→∞(1+x/n)n
 
 	<div class="notes">
 		This is my note.
-
+	
 		- It can contain markdown
 		- like this list
-
+	
 	</div>
 
 使用键盘s键打开提示板。当然，这个提示板是用来给演讲者自己看的，是不用mirror到外接投影仪的。
