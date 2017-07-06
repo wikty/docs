@@ -1,10 +1,203 @@
+---
+date: 2017/07/03
+---
+
+## 基本语法
+
+### PHP 混编
+
+PHP 支持代码与 HTML, Javascript, CSS 等内容混编，开发者只要为 PHP 代码添加特定的标记 `<?php ?>` ，解释器会自动忽略哪些非代码内容。
+
+具体来说解释器会提取脚本文件中所有 `<?php` 和 `?>` 标记之间的内容将其当成 PHP 代码，至于不在标记内的其它内容（包括空白）均会被原样输出到 HTTP 响应内容中。当脚本文件是纯 PHP 代码时，也就是说所有内容都是 PHP 代码，并且放在了标记内，如果不小心在结束标记之后添加了多余空白行，这些空白行会被添加到响应内容中的，因此对于纯 PHP 脚本文件不建议书写结束标记 `?>`。
+
+除了 `<?php ?>` 外，还可以使用  `<script language="php"> </script>` 标记，另外通过配置 `php.ini` 中的 `short_open_tag` 可以开启短标记 `<? ?>`，配置 `asp_tags` 可以开启短标记 `<% %>`。
+
+PHP 代码与其他内容的混编甚至是接受条件控制的，比如下面的代码会根据代码中的条件判断来决定输出哪行内容：
+
+```php+HTML
+<?php if ($expression == true): ?>
+  This will show if the expression is true.
+<?php else: ?>
+  Otherwise this will show.
+<?php endif; ?>
+```
+
+### 指令结束符
+
+PHP 像 C 语言一样，每行代码结束都用分号来标记结束。不过 PHP 允许省略结束标记 `?>` 之前的分号，比如这样：`<?php echo "hello world!" ?>`。
+
+### 注释
+
+PHP 支持 C 语言的多行注释语法 `/* */` ，不过要注意：多行注释嵌套是不允许的。另外还是支持 `//` 和 `#` 语法的单行注释语法。
+
+## 基本数据类型
+
+PHP 支持 `boolean`, `integer`, `float`, `string`, `array`, `object`, `callable`, `resouce`, `NULL` 共 9 种基本的数据类型。要注意 PHP 是一种动态语言，变量的数据类型不是预先定义的，而是根据运行时的上下文环境来决定的。可以使用 `var_dump()`, `gettype()`, `is_int()`, `is_string()`, `is_null()` 等函数来检查变量类型。
+
+### boolean
+
+boolean 取值为 `TRUE` 和 `FALSE` （不区分大小写），许多条件运算的结果会自动将结果转化为 boolean 类型的，如果需要将某个值强制转化为 boolean 类型，使用语法 `(bool) $v` 或 `(boolean) $v`。
+
+一般来说其它类型变量为空时，转化到 boolean 的结果就是 `FALSE`，比如整数为0、浮点为0.0、空字符串以及字符串 "0"、空数组、NULL、空对象都会被当成 `FALSE` 。
+
+### integer
+
+PHP 5.4 之后的版本支持整数以二进制、八进制、十进制、十六进制来表示，示例如下：
+
+```php
+<?php
+$a = 1234; // 十进制数
+$a = -123; // 负数
+$a = 0123; // 八进制数 (等于十进制 83)
+$a = 0x1A; // 十六进制数 (等于十进制 26)
+$a = 0b11111111; // 二进制数字 (等于十进制 255)
+```
+
+值得注意的是 PHP 不支持无符号整数。整数表示范围大小跟平台有关，可以通过常量 `PHP_INT_SIZE` 来查看整数占用字节数，还可以用常量 `PHP_INT_MAX` 和 `PHP_INT_MIN` 来查看整数可表示的最大（PHP 5）和最小整数值（PHP 7）。
+
+当整数变量溢出时，会被自动转换为浮点类型变量。PHP 不支持整除运算，要整除可以强制将结果转为整数 `(int) 1/2` 或者利用函数进行四舍五入 `round(1/2)`。
+
+除了使用 `(int) $v` 和 `(integer) $v` 将变量强制转化为整数外，PHP 还提供了函数 `intval($var, $base=10)` 来将各种类型变量转化整数。
+
+### float
+
+对于浮点数要铭记一点，浮点数的精度是有限的，所以比较两个浮点数是否完全相等是没有意义的，在实际应用中通过会使用一个 epsilon 来比较两个浮点数：
+
+```php
+<?php
+$a = 1.23456789;
+$b = 1.23456780;
+$epsilon = 0.00001;
+
+if(abs($a-$b) < $epsilon) {
+    echo "true";
+}
+```
+
+当数学运算非法时，会产生一个由常量 `NAN` 表示的结果，NAN 和任何值比较的结果都是 FALSE （包括它自己），要检测 NAN 值，需要使用函数 `is_nan()`。
+
+### string
+
+string 类型由一系列字符组成，每个字符用一个字节来存储，也就是意味着 string 类型仅支持 ASCII 字符集中的 256 个字符。要想在 PHP 中支持 Unicode 字符集，参见文档[国际化字符编码支持](http://php.net/manual/zh/refs.international.php)。在 PHP 内部字符串通过一个数组和标识数组长度的结构来表示，允许中间任意位置出现 NULL 字符（不同于C中的字符串以 NULL 作为结尾标识），PHP 文档中关于字符串的函数标明“二进制安全”的意思是，该函数可以处理中间位置含有 NULL 字符的字符串。
+
+#### 字符串创建
+
+在 PHP 中可以使用四种方式创建字符串：
+
+1. 单引号
+
+   用单引号把一系列字符包围起来。要在字符串中插入单引号需要用反斜杠转义 `\'` ，要在字符串中插入反斜杠仍需要反斜杠来转义 `\\` 。以单引号方式创建的字符串，转义字符只对它自己和单引号有转义作用，其它比如 `\n` 并没有转义作用，会被当成两个字符来处理。
+
+2. 双引号
+
+   用双引号把一系列字符包围起来。不同于单引号的是，双引号字符串中的任何转义字符都会被转义，而且双引号中的变量也会被解析。
+
+3. heredoc
+
+   以 `<<<` 开始，后面紧跟一个标识符，然后换行，然后是字符串内容，最后用之前定义的标识符作为字符串结束标记。切记结束标识符要位于行首，它前面不能有任何内容。heredoc 就像没有双引号的多行双引号字符串，其中的转义字符和变量都会被解析。而且从 PHP 5.3 开始可以用 heredoc 来初始化静态变量和类的属性和常量。
+
+4. nowdoc
+
+   nowdoc 自 PHP 5.3 引入。nowdoc 的声明语法类似于 heredoc，只有一点不同在于，nowdoc 要求位于 `<<<` 之后的标识符用单引号括起来。而且 nowdoc 的用途跟 heredoc 完全不同，nowdoc 可以看成是没有单引号的单引号字符，定义的字符串内容不会被进行解析。同样 nowdoc 可以用来初始化静态变量和类的属性和常量。
+
+#### 字符串中变量解析
+
+在双引号和 heredoc 的变量都会被解析后再输出到字符串中。
+
+当 PHP 解析器遇到一个美元符号（*$*）时，会组合尽量多的标识以形成一个合法的变量名。并且支持 array 索引和 object 属性的解析：
+
+```php
+<?php
+$username = array("a", "b", "c");
+
+echo "He is $username[0]";
+echo "He is $username[1]s"; // Won't work
+
+class User {
+  public $name = 'abc';
+}
+
+$user = new User();
+
+echo "He is $user->name";
+echo "He is $user->nameand is 15 years old"; // Won't work
+```
+
+当出现上面这样解释失败的情形时，可以为变量添加花括号来跟周围字符区分开（注意花括号和变量之间不要有任何空白）：
+
+```
+<?php
+// 当在字符串中使用多重数组时，一定要用括号将它括起来
+echo "This works: {$arr['foo'][3]}"; // echo "This works: " . $arr['foo'][3];
+// 访问变量值存储的变量名的变量
+echo "This is the value of the var named $name: {${$name}}";
+// 对象属性名也可以通过变量来访问
+class foo {
+    var $bar = 'I am bar.';
+}
+$f = new foo()
+$v = 'bar';
+echo "{$f->$v}"; // I am bar.
+// 访问函数返回值的变量名的变量
+echo "This is the value of the var named by the return value of getName(): {${getName()}}";
+// 直接在字符串中访问函数返回值是无效的
+echo "This is the value of the return value on getName(): {getName()}"
+// 访问对象方法返回值的变量名的变量
+echo "This is the value of the var named by the return value of \$object->getName(): {${$object->getName()}}";
+// 访问类常量和静态属性
+class beers {
+    const softdrink = 'bar';
+    public static $foo = 'ipa';
+}
+$bar = 'test1'
+$foo = 'test2'
+echo "{${beers::softdrink}}"; // test1
+echo "{${beers::$foo}}"; // test2
+```
+
+#### 字符串访问
+
+字符串允许使用 `[index]` 语法来获取和修改相应位置的字符（索引从 0 开始计算），想要访问字符串中多个字符参数函数 `substr()` 和 `substr_replace()`。PHP 字符串不支持负数索引，当写入索引位置超过字符串当前长度时，会填充空格来拉长字符串。
+
+#### 字符串运算符
+
+字符串支持 `.` 运算符用来连接字符串，并支持 `.=` 运算符将连接后的字符串赋值给左操作数：
+
+```php
+<?php
+$a = "Hello ";
+$b = $a . "World!"; // now $b contains "Hello World!"
+
+$a = "Hello ";
+$a .= "World!";     // now $a contains "Hello World!"
+```
+
+PHP 是一门类型灵活的语言，甚至支持字符串表示的数字进行数学运算，下面语法是有效的：
+
+```php
+<?php
+$bar = 1 + '0.9';
+```
+
+#### 转化为字符串类型
+
+许多情形下字符串类型的转化是自动发生，比如在 echo 和 print 语句，当需要强制将变量转化为字符串时，可以使用语法 `(string) $v` 或函数 `strval()`。数组转化为字符串时，结果总是 `Array`，因此 echo 和 print 是无法打印出数组内容的。此外对于 object 和 resouce 类型变量转化为字符串也无法获得变量的更多细节，为此可以使用函数 `print_r()` 和 `var_dump()` 来获得 array, object 以及 resource 变量的内容。
+
+除了将各种对象转化为字符串打印出来，PHP 还提供了 `serialize()/unserialize()` 这对函数来序列化和逆序列化对象。
+
+
+
+
+
+
+
 PHP keywords - static and self
 
 class A {
     public static function who() {
         echo __CLASS__;
     }
-
+    
     public static function test() {
         self::who();
         //static::who();
@@ -25,7 +218,7 @@ class A {
     public static function who() {
         echo __CLASS__;
     }
-
+    
     public static function test() {
         //self::who();
         static::who();
@@ -48,14 +241,14 @@ class A {
     public static function getSelf() {
         return new self();
     }
-
+    
     public static function getStatic() {
         return new static();
     }
-
+    
     public function getRunSelf() {
         $cls = get_class($this);
-
+    
         return new $cls();
     }
 }
@@ -251,7 +444,7 @@ abstract class AbstractClass
     // Force Extending class to define this method
     abstract protected function getValue();
     abstract protected function prefixValue($prefix);
-
+    
     // Common method
     public function printOut() {
         print $this->getValue() . "\n";
@@ -387,26 +580,26 @@ class PropertyTest
 {
     /**  Location for overloaded data.  */
     private $data = array();
-
+    
     /**  Overloading not used on declared properties.  */
     public $declared = 1;
-
+    
     /**  Overloading only used on this when accessed outside the class.  */
     private $hidden = 2;
-
+    
     public function __set($name, $value)
     {
         echo "Setting '$name' to '$value'\n";
         $this->data[$name] = $value;
     }
-
+    
     public function __get($name)
     {
         echo "Getting '$name'\n";
         if (array_key_exists($name, $this->data)) {
             return $this->data[$name];
         }
-
+    
         $trace = debug_backtrace();
         trigger_error(
             'Undefined property via __get(): ' . $name .
@@ -415,21 +608,21 @@ class PropertyTest
             E_USER_NOTICE);
         return null;
     }
-
+    
     /**  As of PHP 5.1.0  */
     public function __isset($name)
     {
         echo "Is '$name' set?\n";
         return isset($this->data[$name]);
     }
-
+    
     /**  As of PHP 5.1.0  */
     public function __unset($name)
     {
         echo "Unsetting '$name'\n";
         unset($this->data[$name]);
     }
-
+    
     /**  Not a magic method, just here for example.  */
     public function getHidden()
     {
@@ -456,7 +649,7 @@ class MethodTest
         echo "Calling object method '$name' "
              . implode(', ', $arguments). "\n";
     }
-
+    
     /**  As of PHP 5.3.0  */
     public static function __callStatic($name, $arguments)
     {
@@ -484,34 +677,34 @@ class MyIterator implements Iterator
             $this->var = $array;
         }
     }
-
+    
     public function rewind()
     {
         echo "rewinding\n";
         reset($this->var);
     }
-  
+      
     public function current()
     {
         $var = current($this->var);
         echo "current: $var\n";
         return $var;
     }
-  
+      
     public function key() 
     {
         $var = key($this->var);
         echo "key: $var\n";
         return $var;
     }
-  
+      
     public function next() 
     {
         $var = next($this->var);
         echo "next: $var\n";
         return $var;
     }
-  
+      
     public function valid()
     {
         $key = key($this->var);
@@ -533,12 +726,12 @@ class MyCollection implements IteratorAggregate
 {
     private $items = array();
     private $count = 0;
-
+    
     // Required definition of interface IteratorAggregate
     public function getIterator() {
         return new MyIterator($this->items);
     }
-
+    
     public function add($value) {
         $this->items[$this->count++] = $value;
     }
@@ -579,11 +772,11 @@ class SubObject
 {
     static $instances = 0;
     public $instance;
-
+    
     public function __construct() {
         $this->instance = ++self::$instances;
     }
-
+    
     public function __clone() {
         $this->instance = ++self::$instances;
     }
@@ -593,7 +786,7 @@ class MyCloneable
 {
     public $object1;
     public $object2;
-
+    
     function __clone()
     {
         // Force a copy of this->object, otherwise
@@ -666,7 +859,7 @@ class A {
     public static function foo() {
         static::who(); // 延迟邦定
     }
-
+    
     public static function who() {
         echo __CLASS__."\n";
     }
@@ -678,7 +871,7 @@ class B extends A {
         parent::foo(); // 调用父类的foo，邦定类是C
         self::foo(); // 调用继承自父类的foo，邦定类是C
     }
-
+    
     public static function who() {
         echo __CLASS__."\n";
     }
@@ -830,11 +1023,11 @@ class Exception
     protected $line;                            // source line of exception
     private   $trace;                           // backtrace
     private   $previous;                        // previous exception if nested exception
-
+    
     public function __construct($message = null, $code = 0, Exception $previous = null);
-
+    
     final private function __clone();           // Inhibits cloning of exceptions.
-
+    
     final public  function getMessage();        // message of exception
     final public  function getCode();           // code of exception
     final public  function getFile();           // source filename
@@ -842,7 +1035,7 @@ class Exception
     final public  function getTrace();          // an array of the backtrace()
     final public  function getPrevious();       // previous exception
     final public  function getTraceAsString();  // formatted string of trace
-
+    
     // Overrideable
     public function __toString();               // formatted string for display
 }
@@ -854,27 +1047,27 @@ http://cn.php.net/spl
 SPL Exceptions Class Tree
 
     LogicException (extends Exception): Exception that represents error in the program logic
-        
+
         BadFunctionCallException: Exception thrown if a callback refers to an undefined function or if some arguments are missing. A typical use for this exception, is in conjunction with the is_callable() function
-            
+
             BadMethodCallException : Exception thrown if a callback refers to an undefined method or if some arguments are missing. typically used in conjunction with __call magic method.
-        
+
         DomainException: Exception thrown if a value does not adhere to a defined valid data domain. 
-        
+
         InvalidArgumentException: Exception thrown if an argument is not of the expected type. 
-        
+
         LengthException: Exception thrown if a length is invalid. 
-        
+
         OutOfRangeException: Exception thrown when an illegal index was requested. This represents errors that should be detected at compile time. 
-    
+
     RuntimeException (extends Exception): Exception thrown if an error which can only be found on runtime occurs
-        
+
         OutOfBoundsException: Exception thrown if a value is not a valid key. This represents errors that cannot be detected at compile time.  
-        
+
         OverflowException: Exception thrown when adding an element to a full container. 
-        
+
         UnderflowException: Exception thrown when performing an invalid operation on an empty container, such as removing an element
 
         RangeException: Exception thrown to indicate range errors during program execution.  Normally this means there was an arithmetic error other than under/overflow. This is the runtime version of DomainException
-        
+
         UnexpectedValueException: Exception thrown if a value does not match with a set of values. Typically this happens when a function calls another function and expects the return value to be of a certain type or value not including arithmetic or buffer related errors.
