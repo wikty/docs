@@ -34,55 +34,55 @@ XPath：`/foo/following-sibling::bar`
 
 1. 祖先轴，当前节点的祖先节点
 
-   	ancestor::element-name
+    ancestor::element-name
 
 2. 祖先轴+当前节点
 
-   	ancestor-or-self::element-name
+    ancestor-or-self::element-name
 
 3. 属性轴，当前节点的属性
 
-   	attribute::attr-name
+    attribute::attr-name
 
 4. 孩子轴，当前节点的儿子节点
 
-   	child::element-name
+    child::element-name
 
 5. 后代轴，当前节点的后代节点
 
-   	descendant::element-name
+    descendant::element-name
 
 6. 后代轴+当前节点
 
-   	descendant-or-self::element-name
+    descendant-or-self::element-name
 
 7. 节点树中位于当前节点之后的所有节点，不包括后代节点、属性节点、名称空间节点
 
-   	following::element-name
+    following::element-name
 
 8. 节点树中位于当前节点之后的所有兄弟节点
 
-   	following-sibling::element-name
+    following-sibling::element-name
 
 9. 名称空间轴
 
-   	namespace::
+    namespace::
 
 10. 父亲轴，当前节点的父节点
 
-   	parent::element-name
+   parent::element-name
 
 11. 节点树中位于当前节点之前的所有节点，不包括祖先节点、属性节点、名称空间节点
 
-   	preceding::element-name
+    preceding::element-name
 
 12. 节点树中位于当前节点之前的所有兄弟节点
 
-   	preceding-sibling::element-name
+    preceding-sibling::element-name
 
 13. 指向当前节点自身的轴
 
-   	self::
+    self::
 
 
 ## 条件测试
@@ -111,6 +111,60 @@ XPath：`/foo[bar]`
 4. 位置筛选简写，`[position() = 1]`可以简写为`[1]`
 5. 当前节点`.`
 6. 父节点`..`
+
+## 常用实例
+
+### 选取两个节点之间的所有邻居节点
+
+样例文档
+
+```html
+<div>
+	<h3>标题一</h3>
+	<p>one</p>
+	<p>two</p>
+	<h3>标题二</h3>
+    <p>three</p>
+    <p>four</p>
+    <h3>标题三</h3>
+    <p>five</p>
+    <h3>无用标题</h3>
+</div>
+```
+
+网页中经常会遇到列表类型的内容，列表又往往会包含多个子列表，如上面样例所示 `<div></div>` 代表整个列表，而其中的每个 `<h3></h3>` 则代表子列表的开始部分，下面将详细讲解如何分别提取各个子列表。
+
+如果子列表数目是固定的，可以直接使用如下语法来提取子列表：
+
+```
+# 提取第一个子列表
+//p[count(preceding-sibling::h3)=1]
+# 提取第二个子列表
+//p[count(preceding-sibling::h3)=2]
+# 依次类推可以提取第N个子列表
+```
+
+不过网页中子列表的数目往往是未知的、不固定的，因此需要借助其它方法来提取子列表。在介绍解决方案之前先来看一个叫做 Kayessian 方法的公式：
+
+```
+$ns1[count(.|$ns2) = count($ns2)]
+```
+
+其中 `$ns1` 和 `$ns2` 分别表示节点集，上述公式得到的结果是这两个节点集的交集。 Kayessian 方法是 XPath 1.0 求节点集交集的方法，如果使用的是 XPath 2.0 ，可以直接使用 `$ns1 intersect $ns2` 来求交集。
+
+这里我们将 Kayessian 方法应用于获取两个节点之间所有的邻居节点，现在假设我们要提取第二个子列表（即“标题二”到“标题三”之间的内容），取 `$ns1` 为 `//h3[2]/following-sibling::node()` ，`$ns2` 为 `//h3[3]/preceding-sibling::node()`，替换  Kayessian 公式中的 `$ns1` 和 `$ns2` 后将得到：
+
+```
+//h3[2]/following-sibling::node()[
+  count(.|//h3[3]/preceding-sibling::node())
+  =
+  count(//h3[3]/preceding-sibling::node())
+]
+```
+
+只要更改其中 `h3[$i]` 的位置参数 `$i` 就可以提取任意子列表。
+
+
 
 ## 语法参考
 
@@ -173,188 +227,188 @@ XPath：`/foo[bar]`
 
 1. 文档节点
 
-   	/
+    /
 
 2. 文档最高层次节点`root`
 
-   	/root
+    /root
 
 3. 文档中`root`节点的子节点`actors`的所有`actor`儿子节点
 
-   	/root/actors/actor
+    /root/actors/actor
 
 4. 文档中在名称空间`foo`下的`singer`节点且不考虑其在文档中的位置
 
-   	//foo:singer
+    //foo:singer
 
 5. 节点`root`下的所有后代`actor`节点
 
-   	/root//actor
+    /root//actor
 
 6. 文档中所有的`foo:singer`节点的`id`属性值
 
-   	//foo:singer/@id
+    //foo:singer/@id
 
 7. 文档中从前往后第一个`actor`节点的文本内容
 
-   	//actor[1]/text()
+    //actor[1]/text()
 
 8. 文档中从前往后最后一个`actor`和倒数第二个`actor`
 
-   	//actor[last()]
-   	//actor[last() - 1]
+    //actor[last()]
+    	//actor[last() - 1]
 
 9. 文档中每个`actors`的最后一个`actor`子节点
 
-   	//actors/actor[last()]
+    //actors/actor[last()]
 
 10. 文档中所有`actors`的所有`actor`子节点的最后一个
 
-   	//(actors/actor)[last()]
+   //(actors/actor)[last()]
 
 11. 文档中从前往后第一个和第二个`actor`节点
 
-   	//actor[position() < 3]
+    //actor[position() < 3]
 
 12. 文档中含有属性`id`的所有`actor`节点
 
-   	//actor[@id]
+    //actor[@id]
 
 13. 文档中属性`id`值等于3的所有`actor`节点
 
-   	//actor[@id='3']
+    //actor[@id='3']
 
 14. 文档中属性`id`值小于等于3的所有`actor`节点
 
-   	//actor[@id<=3]
+    //actor[@id<=3]
 
 15. 文档中`foo:singers`节点的所有儿子节点
 
-   	/root/foo:singers/*
+    /root/foo:singers/*
 
 16. 文档中`root`所有的孙子节点`actor`
 
-   	/root/*/actor
+    /root/*/actor
 
 17. 文档中含有属性`id`的所有节点
 
-   	//*[@id]
+    //*[@id]
 
 18. 文档中的所有节点
 
-   	//*
+    //*
 
 19. 文档中所有`actor`和`foo:singer`节点
 
-   	//actor|//foo:singer
+    //actor|//foo:singer
 
 20. 文档中第一个元素的名称
 
-   	name(//*[1])
+    name(//*[1])
 
 21. 文档第一个`actor`节点的属性`id`的数值表示
 
-   	number(//actor[1]/@id)
+    number(//actor[1]/@id)
 
 22. 文档第一个`actor`节点的属性`id`的字符串表示
 
-   	string(//actor[1]/@id)
+    string(//actor[1]/@id)
 
 23. 文档第一个`actor`节点的内容长度
 
-   	string-length(//actor[1]/text())
+    string-length(//actor[1]/text())
 
 24. 文档中第一个`foo:singer`的名称（不含名称空间）
 
-   	local-name(//foo:singer[1])
+    local-name(//foo:singer[1])
 
 25. 文档中`foo:singer`节点的数目
 
-   	count(//foo:singer)
+    count(//foo:singer)
 
 26. 文档中`foo:singer`节点的所有属性
 
-   	//foo:singer/@*
+    //foo:singer/@*
 
 27. 名称空间`foo`下的所有属性
 
-   	@foo:*
+    @foo:*
 
 28. 文档中的跟第一个`actor`相关的`profile`节点
 
-   	//profile[@refid=//actor[1]/@id]
+    //profile[@refid=//actor[1]/@id]
 
 29. 文档中含有`actor`的第一个`actors`节点
 
-   	//actors[actor][1]
+    //actors[actor][1]
 
 30. 从当前节点上下文中获取子节点`actor`
 
-   	actor
-   	./actor
+    actor
+    	./actor
 
 31. 对文档中所有`foo:singer`节点的`id`属性值求和
 
-   	sum(//foo:singer/@id)
+    sum(//foo:singer/@id)
 
 32. 文档中含有`author/degree`的`book`节点
 
-   	book[author/degree]
+    book[author/degree]
 
 33. 文档中所有含有`degreee`和`award`子节点的`author`节点
 
-   	author[degree][award]
-   	author[degree and award]
+    author[degree][award]
+    	author[degree and award]
 
 34. 文档中含有子节点`degree`或`award`且同时含有`publication`的`author`节点
 
-   	author[(degree or award) and publication]
+    author[(degree or award) and publication]
 
 35. 文档中含有子节点`degree`且不含有`publication`的`author`节点
 
-   	author[degree and not(publication)]
+    author[degree and not(publication)]
 
 
 36.    文档中含有值等于`Bob`的子节点`username`的节点`author`
 
-       	author[username="Bob"]
+       author[username="Bob"]
 
 37.    文档中所有值不等于`Bob`的节点`author`
 
-                 author[. != "Bob"]
+               author[. != "Bob"]
 
 38.    文档中含有值等于`Bob`的`username`子节点的`author`节点，且其兄弟节点`price`大于50
 
-                 author[username="Bob" and ../price > 50]
+               author[username="Bob" and ../price > 50]
 
 39.    文档中含有任意子节点值等于`Bob`的`author`节点
 
-                 author[*="Bob"]
+               author[*="Bob"]
 
 40.    节点`p`的第二个文本节点内容
 
-                 p/text()[2]
+               p/text()[2]
 
 41.    当前节点最近的`book`祖先节点
 
-                 ancestor::book[1]
+               ancestor::book[1]
 
 42.    当前节点最近的`author`祖先节点，且其父亲节点是`book`
 
-                 ancestor::author[parent::book][1]
+               ancestor::author[parent::book][1]
 
 43.    当前节点的所有儿子节点（不含文本节点）
 
-                 /*
+               /*
 
 44.    当前节点的所有儿子节点（含有文本节点）
 
-                 /child::node()
+               /child::node()
 
 45.    当前节点所有不含文本的儿子节点
 
-                 /child::node()[not(text())]
+               /child::node()[not(text())]
 
 46.    当前节点的所有儿子节点（不含文本节点）
 
-                 /child::node()[not(self::text())]
+               /child::node()[not(self::text())]
