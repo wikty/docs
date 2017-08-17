@@ -67,7 +67,7 @@ $ echo 'theme = "ananke"' >> config.toml
 
 如果命令行报错说找不到 git 命令，那是由于系统并未安装版本控制软件 Git，推荐前往 [git-scm.com][12] 下载安装 Git。或者直接前往 https://themes.gohugo.io/gohugo-theme-ananke/ 下载主题的资源文件后，将其解压至目录 `your-folder-name/themes` 中。
 
-最后一行命令 `echo 'theme = "ananke"' >> config.toml ` 用来将网站主题配置信息添加到 `config.toml` 文件中。
+最后一行命令 `echo 'theme = "ananke"' >> config.toml ` 用来将网站主题配置信息添加到 `config.toml` 文件中。注：在 Windows 下，应该将这样命令替换为 `echo theme = "ananke" >> config.toml` 。或者也可以直接用文本编辑器打开，添加一行字符串 `theme = "ananke"` 。
 
 ## 添加文档
 
@@ -121,9 +121,11 @@ $ hugo undraft content/post/first-article.md
 
 ## 发布网站
 
-经过上面折腾后，网站已经可以在自己的电脑上浏览了，不过只有将网站发布到互联网后，别人才能浏览。可以将网站发布到 GitHub ，也可以发布到自己的服务器上。当然对于大多数人而言发布到 GitHub 是首选，因为它是免费的而且操作也很简单。利用 Github 搭建网站，参见[官网介绍][13]。
+经过上面折腾后，网站已经可以在自己的电脑上浏览了，不过只有将网站发布到互联网后，别人才能浏览。可以将网站发布到 GitHub ，也可以发布到自己的服务器上。当然对于大多数人而言发布到 GitHub 是首选，因为它是免费的而且操作也很简单。利用 Github 搭建网站，参见[官网介绍][13]。简单来说，就是要在 Github 上注册账号，并创建一个代码仓库。
 
 ### 发布到GitHub
+
+在发布网站之前，还需要做些配置工作，假设你 Github 的用户名是 `github-username` ，Github 上创建的仓库名是 `your-repo-name`，那么在最终发布网站之后，所有人都可以通过网址 ：http://github-username.github.io/your-repo-name 来访问你的网站了，不过在发布之前，我们需要把这个信息写到网站的配置文件中，将配置文件中的 `baseURL = "http://example.org/"` 改为 `baseURL = "http://github-username.github.io/your-repo-name"` ，然后就可以继续发布网站了。
 
 首次发布到 GitHub，运行以下命令：
 
@@ -140,7 +142,7 @@ $ git commit -m "message about this commit"
 $ git push -f origin gh-pages
 ```
 
-然后就可以通过网址：http://github-username.github.io/your-repo-name 来访问发布的网站了，注意要将 `github-username` 替换为自己的 Github 用户名，`your-repo-name` 替换为在 Github 上创建的仓库名。
+然后就可以通过网址： 来访问发布的网站了，注意要将 `github-username` 替换为自己的 Github 用户名，`your-repo-name` 替换为在 Github 上创建的仓库名。
 
 以后网站内容要更新时，需要再次进行发布，后续发布运行以下命令：
 
