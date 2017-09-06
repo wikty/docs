@@ -7,7 +7,7 @@ categories: latex, mathjax
 
 ## 介绍
 
-[MathJax](https://www.mathjax.org/)是用来在浏览器上渲染数学公式的Javascript库，使用简单灵活，只需要引入MathJax脚本就可以将网页中的[MathML](https://en.wikipedia.org/wiki/MathML)、[TeX/LaTeX](https://en.wikipedia.org/wiki/TeX)、[AsciiMath](http://asciimath.org/)语言转换为数学公式来显示，并且生成的数学公式仅使用了CSS、Web字体以及SVG等技术（没有使用位图），因此生成的数据公式是支持缩放的。
+[MathJax](https://www.mathjax.org/)是用来在浏览器上渲染数学公式的Javascript库，使用简单灵活，只需要引入MathJax脚本就可以将网页中的[MathML](https://en.wikipedia.org/wiki/MathML)、[TeX/LaTeX](https://en.wikipedia.org/wiki/TeX)、[AsciiMath](http://asciimath.org/)语言转换为数学公式来显示，并且生成的数学公式仅使用了CSS、Web 字体以及 SVG 等技术（没有使用位图），因此生成的数据公式是支持缩放的。
 
 ## 安装
 
