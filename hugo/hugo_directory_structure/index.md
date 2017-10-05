@@ -1,5 +1,5 @@
 ---
-title: Hugo 网站内容的目录结构
+title: Hugo 目录结构
 author: Xiao Wenbin
 date: 2017/08/17
 category: hugo

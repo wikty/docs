@@ -5,6 +5,8 @@ date: 2016/10/29
 category: markdown
 ---
 
+https://daringfireball.net/projects/markdown/syntax
+
 ## 兼容 HTML
 
 Markdown文档中可以直接插入大多数HTML标签。HTML的区段标签（如：`<span><cite><del>`等）甚至可以直接插入到Markdown的段落、列表等语法中。同时某些HTML区块标签的插入存在一些限制（如： `<div><table><pre><p>` 等），必须在前后加上空行与其它内容隔开，还要求它们的开始标签与结尾标签不能用制表符或空格来缩进。
