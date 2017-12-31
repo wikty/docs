@@ -2,7 +2,7 @@
 date: 2017/12/31
 ---
 
-
+[TOC]
 
 
 
@@ -37,61 +37,87 @@ date: 2017/12/31
 
   有少数字符像`$`, `|`, `.`, `+` 等这些在正则表达式中并不指代它们自己而是有特殊含义。通常它们用来指代一类字符或者改变正则表达式的意义，所以被称为元字符。
 
-对于元字符按照用途可以分为以下几类：
+除了以上两类组成正则表达式的字符外，一些函数库和工具还允许通过参数配置来影响正则匹配过程，比如匹配时是否忽略大小写等。这些配置参数也可以看成是正则表达式的组成部分。一个正则表达式就是用这些字符混合组成的。
 
-* 位置约束
-* 指代字符
-* 计量（Quantification）
-* 或
+## Basic Syntax
+
+元字符按照用途可以分为以下几种：
+
+* 位置约束（Anchor）
+* 字符通配（Wildcard）
+* 字符类别（CharClass）
+* 字符集合（CharSet）
+* 计量（Quantifier）
+* 或（VerticalBar）
 * 分组（Parentheses）
-* ​
+* 转义（Backslash）
 
-除了以上两类组成正则表达式的字符外，一些函数库和工具还允许通过参数配置来影响正则匹配过程，比如匹配时是否忽略大小写等。这些配置参数也可以看成是正则表达式的组成部分。
+### 位置约束
 
-### 位置
+指定正则表达式要匹配源字符串中哪里的位置。
 
-| 名字     | 语法   | 描述                                       |
-| ------ | ---- | ---------------------------------------- |
-| Caret  | `^`  | Matches the **start** of the string, and in MULTILINE mode also matches immediately after each newline. |
-| Dollar | `$`  | Matches the **end** of the string or just before the newline at the end of the string, and in MULTILINE mode also matches before a newline. |
+| Name   | Syntax | Description                              |
+| ------ | ------ | ---------------------------------------- |
+| Caret  | `^`    | 正则表达式匹配字符串**开始**位置。具体效果会受到正则配置参数 MULTILINE 的影响。 |
+| Dollar | `$`    | 正则表达式匹配字符串**结尾**位置。具体效果会受到正则配置参数 MULTILINE 的影响。 |
 
-### 指代
+### 字符通配
+
+指代任意字符，使得正则表达式书写更加紧凑。
 
 | Name | Syntax | Description                              |
 | ---- | ------ | ---------------------------------------- |
-| Dot  | `.`    | In the default mode, this matches any character **except** a newline. If the DOTALL flag has been specified, this matches any character including a newline. |
+| Dot  | `.`    | 匹配除了换行符号以外的所有字符。要同时允许匹配换行，需要开启正则配置参数 DOTALL。 |
+
+### 字符类别
+
+指代某类字符，比如字母类、数字类等。
+
+| Name      | Syntax | Description                              |
+| --------- | ------ | ---------------------------------------- |
+| CharClass | 见下面介绍  | 不同版本的正则表达式中表示字符类别的方法可能存在差异，下面介绍的以 Python 中的正则为准。 |
+
+* 数字类：`\d` 默认等价于 `[0-9]` ，若开启 UNICODE 则扩充该集合。补集为 `\D`。
+* 空白类：`\s` 默认等价于 `[\t\n\r\f\v]`，若开启 UNICODE 扩充该集合。补集为 `\S`。
+* 单词类：`\w` 默认等价于 `[0-9a-zA-Z_]`，若开启 LOCALE 和 UNICODE 扩充集合。补集为 `\W`。
+* 边界类：`\b` 用来表示 `\w` 和 `\W` 或开头之间的字符，即不属于单词的字符。补集为 `\B`。
+
+注：字符类别会受到语言本地化以及字符集编码影响，参见正则配置 LOCALE 和 UNICODE。
+
+### 字符集合
+
+定义一个字符集合，指代集合中的任意字符。
+
+| Name    | Syntax  | Description                              |
+| ------- | ------- | ---------------------------------------- |
+| CharSet | `[...]` | `[]` 充当字符集合的定界符，匹配定义于其中的任意字符。注：此处 `...` 代指一个省略的正则语法，后文也会这样表示。 |
+
+如何定义字符集合呢？
+
+* 直接罗列字符。
+* 使用字符范围语法，例如 `[0-9]` 表示从 0 到 9 这 10 个字符。
+* 补集语法。在集合中第一字符如果是 `^`，则表示补集，例如 `[^0-9]` 表示除 0 到 9 这 10 个字符以外的所有字符。
+* 字符类别，比如 `\d`, `\w` 等。
+* 具有特殊含义的元字符在字符集合中没有特殊含义，比如 `[*+]` 仅仅表示匹配 * 或者 + 字符。
+* 字符集合中定义字符 `-` 和 `]` 时，需要转义。因为 `-` 在字符范围语法中使用到，如果要在字符集合中包含它，需要将其放在第一个或者使用 `\` 对其转义。`]` 字符表示字符集合结束定界符，因此在使用时也需要放在第一个或者进行转义。
 
 ### 计量
 
-| Name       | Syntax          | Desc                                     |
+用于定义紧跟在其前面匹配项可以出现的次数，这里要注意紧跟在前面的配置项可以是一个字符，也可以是一个分组。
+
+| Name       | Syntax          | Description                              |
 | ---------- | --------------- | ---------------------------------------- |
-| Star       | `*`             | Causes the resulting RE to match **0** or more repetitions of the preceding RE, as many repetitions as are possible. |
-| Plus       | `+`             | Causes the resulting RE to match **1** or more repetitions of the preceding RE, as many repetitions as are possible. |
-| Question   | `?`             | Causes the resulting RE to match **0** or **1** repetitions of the preceding RE. |
-|            | `{m}`           | Specifies that exactly m copies of the previous RE should be matched; fewer matches cause the entire RE not to match. |
-|            | `{m,n}`         | Causes the resulting RE to match from m to n repetitions of the preceding RE, attempting to match as many repetitions as possible. |
-|            | `{,n}` 或 `{m,}` | 省去上界或者下界                                 |
-| Non-Greedy | 后置 `?`          | The `*`, `+`, `{m}`, `{m,n}`, and `?` qualifiers are all greedy; they match as much text as possible. Adding ? after the qualifier makes it perform the match in non-greedy or minimal fashion; as few characters as possible will be matched. 例如：`<*>` 将匹配 `<a> b <c>` ，而 `<*?>` 仅匹配其中的 `<a>` 。 |
+| Star       | `*`             | 匹配项出现 **0** 次或任意多次，尽可能多的匹配，即匹配是贪婪的。      |
+| Plus       | `+`             | 匹配项出现 **1** 次或任意多次，尽可能多的匹配，即匹配是贪婪的。      |
+| Question   | `?`             | 匹配项出现 **0** 次或 **1** 次，尽可能多的匹配，即匹配是贪婪的。  |
+| Range      | `{m}`           | 匹配项**仅**出现 m 次。                          |
+| Range      | `{m,n}`         | 匹配项出现次数为 **m** 次到 **n** 次，尽可能多的匹配，即匹配是贪婪的。 |
+| Range      | `{,n}` 或 `{m,}` | `{m,n}` 省去上界或者下界次数。                      |
+| Non-Greedy | 计量字符后置 `?`      | 上述各种计量字符 `*`, `+`, `{m}`, `{m,n}` 以及 `?` 都是贪婪匹配的。如果想要关闭这种贪婪特性，可以在后面紧跟 `?` 字符。 例如：字符串 `<a> b <c>` 使用 `<*>`将整个被匹配，而使用 `<*?>` 则仅匹配其中的 `<a>` 。 |
 
-### CharSet
+### 或
 
-`[]`
-
-直接罗列字符；
-
-使用字符范围语法 - ，要包含 - 则需借助转义或者放在第一个；
-
-(, +, * 等特殊字符没有正则含义；
-
-CharClass 可以使用；
-
-字符集支持补集的概念，第一个字符是 `^` ，则集合表示补集；
-
-匹配 `]` ，将其放在第一个字符位置或者使用转义
-
-### CharClass
-
-受到 re.LOCALE 和 re.UNICODE 两个设置影响
+A|B, where A and B can be arbitrary REs, creates a regular expression that will match either A or B. An arbitrary number of REs can be separated by the '|' in this way. This can be used inside groups (see below) as well. As the target string is scanned, REs separated by '|' are tried from left to right. When one pattern completely matches, that branch is accepted. This means that once A matches, B will not be tested further, even if it would produce a longer overall match. In other words, the '|' operator is never greedy. To match a literal '|', use `\|`, or enclose it inside a character class, as in `[|]`.
 
 ### 分组
 
@@ -99,71 +125,39 @@ CharClass 可以使用；
 
 Matches whatever regular expression is inside the parentheses, and indicates the start and end of a group; the contents of a group can be retrieved after a match has been performed, and can be matched later in the string with the \number special sequence. To match the literals '(' or ')', use \( or \), or enclose them inside a character class: `[(][)]`.
 
-
-
-### 组合构造
-
-或
-
-A|B, where A and B can be arbitrary REs, creates a regular expression that will match either A or B. An arbitrary number of REs can be separated by the '|' in this way. This can be used inside groups (see below) as well. As the target string is scanned, REs separated by '|' are tried from left to right. When one pattern completely matches, that branch is accepted. This means that once A matches, B will not be tested further, even if it would produce a longer overall match. In other words, the '|' operator is never greedy. To match a literal '|', use `\|`, or enclose it inside a character class, as in `[|]`.
-
-连接
-
-Regular expressions can be concatenated to form new regular expressions; if A and B are both regular expressions, then AB is also a regular expression. In general, if a string p matches A and another string q matches B, the string pq will match AB. This holds unless A or B contain low precedence operations; boundary conditions between A and B; or have numbered group references. Thus, complex expressions can easily be constructed from simpler primitive expressions like the ones described here. 
-
-
-
 ### 转义
 
-Backslash
+使用转义字符 `\` 来对某些字符进行转义。转义的常见情形如下：
 
-`\`
+* 元字符转义使其失去元字符的特殊含义，比如：`*` 进行转义后 `\*` 将不再具有计量的意义。
+* 分组号，`\number` 只能指定 1 到 99，三位整数有可能被当成十六进制数字
+* 开头：`\A`
+* 结尾：`\Z`
+* 十六进制：三位数字转义表示十六进制字符
 
-元字符转义：
-
-escapes special characters (permitting you to match characters like '*', '?', and so forth)
-
-转义序列：
-
-分组号，`\number` 只能指定 1 到 99，三位整数有可能被当成十六进制数字
-
-数字类：`\d` 默认等价于 `[0-9]` ，若开启 UNICODE 则扩充该集合。`\D`
-
-空白类：`\s` 默认等价于 `[\t\n\r\f\v]`，若开启 UNICODE 扩充该集合。`\S`
-
-单词类：`\w` 默认等价于 `[0-9a-zA-Z_]`，若开启 LOCALE 和 UNICODE 扩充集合。`\W`
-
-边界类：`\b` 用来表示 `\w` 和 `\W` 或开头之间的字符，即不属于单词的字符。`\B`
-
-开头：`\A`
-
-结尾：`\Z`
-
-十六进制：三位数字转义表示十六进制字符
-
-参见函数 re.escape 以及 re.LOCALE 以及 re.UNICODE 等配置项。
+注：Python 中提供了 `re.escape` 函数来对一个字符串中含有的正则元字符进行转义。
 
 ## Advanced Syntax
 
-
-
-### 扩展语法
-
 以 `(?...)` 模式出现的就是扩展语法，其中 `...` 代表具体是怎样的扩展语法
 
-正则配置
+### 正则配置
 
 `(?flag)` 
 
 其中 flag 可以是 i, L, m, s, u, x 中的任意一个或多个，分别对应大小写、本地语言、多行、点匹配换行、unicode 以及 verbose 。改变正则的匹配模式，它应该是正则表达式中第一个非空白 non-whitespace 匹配的语法
 
+### 非捕获版本的分组
+
 `(?:...)`
 
-非捕获版本的分组：A non-capturing version of regular parentheses. Matches whatever regular expression is inside the parentheses, but the substring matched by the group cannot be retrieved after performing a match or referenced later in the pattern.
+A non-capturing version of regular parentheses. Matches whatever regular expression is inside the parentheses, but the substring matched by the group cannot be retrieved after performing a match or referenced later in the pattern.
+
+### 命名分组
 
 `(?P<name>...)`
 
-命名分组，类似普通分组。支持嵌套。
+类似普通分组。支持嵌套。
 
 当前正则表达式中可以引用，语法为 `(?P=name)` 和 `\1`
 
@@ -171,13 +165,17 @@ escapes special characters (permitting you to match characters like '*', '?', an
 
 替换字符串时引用，regex.sub('\g<name>')  和 regex.sub('\g<1>') 和  regex.sub('\1')
 
+### 引用命名分组
+
 `(?P=name)`
 
 A backreference to a named group; it matches whatever text was matched by the earlier group named name. 比如匹配引号，`(?P<quote>['"]).*?(?P=quote)`
 
+### 正则注释
+
 `(?#...)`
 
-正则注释
+### 前向正断言
 
 `(?=...)`
 
@@ -185,9 +183,13 @@ A backreference to a named group; it matches whatever text was matched by the ea
 
 例如：`(xiao (?=wen)|wen)` 既可以匹配 `iao wen bin` 中的 wen
 
+### 前向负断言
+
 `(?!...)`
 
 前向负断言negative lookahead assertion：只有接下来的字符串不满足该条件时，才会进行匹配。同样不成立时，也不会影响后续的匹配。
+
+### 后向正断言
 
 `(?<=...)`
 
@@ -195,9 +197,13 @@ A backreference to a named group; it matches whatever text was matched by the ea
 
 所谓后向就是沿原字符串已经匹配过的方向来进行断言测试。例如：`(?<=-)\w+` 只会匹配 `chicken-egg` 中的一个 `egg`
 
+### 后向负断言
+
 `(?<!...)`
 
 后向负断言negative lookbehind assertion
+
+### 分组条件匹配 
 
 `(?(id/name)yes-pattern|no-pattern)`
 
@@ -205,55 +211,45 @@ A backreference to a named group; it matches whatever text was matched by the ea
 
 
 
+## 正则配置参数
 
+* DOTALL 
 
-
-
-
-
-
-
-
-
-
-
-正则配置项
-
-DOTALL 控制 `.` 是否匹配任意字符，包括换行。默认 `.` 匹配除换行以外的任意字符。
+控制 `.` 是否匹配任意字符，包括换行。默认 `.` 匹配除换行以外的任意字符。
 
 Make the '.' special character match any character at all, including a newline; without this flag, '.' will match anything except a newline.
 
-MULTILINE 
+* MULTILINE 
 
 控制 `^` 和 `$` 匹配字符串开头和结尾的行为。默认将输入的字符串作为一整个字符串来匹配，开启该模式后会将其中每个换行间隔的当成字符串
 
 When specified, the pattern character '^' matches at the beginning of the string and at the beginning of each line (immediately following each newline); and the pattern character '$' matches at the end of the string and at the end of each line (immediately preceding each newline).
 
-IGNORECASE 匹配时是否忽略大小写
+* IGNORECASE 
+
+匹配时是否忽略大小写
 
 Perform case-insensitive matching; expressions like [A-Z] will match lowercase letters, too. This is not affected by the current locale. To get this effect on non-ASCII Unicode characters such as ü and Ü, add the UNICODE flag.
 
-LOCALE 本地语言支持
+* LOCALE 
+
+本地语言支持
 
 Make \w, \W, \b, \B, \s and \S dependent on the current locale.
 
-UNICODE  unicode 字符支持
+* UNICODE  
+
+unicode 字符支持
 
 Make the \w, \W, \b, \B, \d, \D, \s and \S sequences dependent on the Unicode character properties database.
 
-VERBOSE 
+* VERBOSE 
 
 支持 verbose 模式，即正则中夹杂注释说明
 
 This flag allows you to write regular expressions that look nicer and are more readable by allowing you to visually separate logical sections of the pattern and add comments. Whitespace within the pattern is ignored, except when in a character class, or when preceded by an unescaped backslash, or within tokens like `*?`, `(?:` or `(?P<...>`. When a line contains a `#` that is not in a character class and is not preceded by an unescaped backslash, all characters from the leftmost such `#` through the end of the line are ignored.
 
-
-
-
-
-
-
-### 正则表达式的局限
+## 正则表达式的局限
 
 正则表达式可以匹配任意字符串吗？并不能。
 
@@ -267,17 +263,9 @@ This flag allows you to write regular expressions that look nicer and are more r
 
 
 
-
-
-
-
-
-
-## Application
+## Python Regex
 
 Python 和 正则对某些字符的二次转义问题，建议在 Python 中使用 raw string 来书写正则语法
-
-
 
 search 查找字符串中第一次出现的匹配子串
 
