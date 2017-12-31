@@ -3,6 +3,74 @@
 
 可以从这里[下载](https://github.com/jgm/pandoc/releases/download/1.19/pandoc-1.19-windows.msi)，另外转换PDF需要安装[LaTeX](http://miktex.org/)
 
+##  Pandoc使用方法
+
+Pandoc是一个命令行工具，所以我们需要在命令行环境中使用它
+
+### 检查是否安装成功
+
+查看版本信息
+
+```
+pandoc --version [Enter]
+```
+
+### 命令行中的转换实验
+
+命令行中输入markdown转为html
+
+1. 命令行中输入：`pandoc [Enter]`
+2. 光标在下一行闪动，表示可以在此输入内容，可以输入一些markdown内容，然后输入`[Crtl+Z][Enter]`来表示输入结束
+3. 可以看到刚刚输入的markdown内容被转换为html内容，在命令行中输出了
+
+命令行中输入html转为markdown
+
+1. 命令行中输入：`pandoc -f html -t markdown [Enter]`
+2. 光标在下一行闪动，同刚刚命令一样，可以在命令行中输入内容，转换后在命令行中输出，但这次输入的命令含有参数，其中`-f html`表示输入内容格式为html，`-t markdown`表示输出内容格式为markdown，也就是说这次我们希望将输入的html内容转换为markdown内容在命令行中输出，因此输入一些html内容，再输入`[Crtl+Z][Enter]`表示结束，然后在命令行中可以看到markdown内容输出
+3. 其实pandoc的默认参数是`-f markdown -t html`，所以命令`pandoc [Enter]`和命令`pandoc -f markdown -t html [Enter]`是等价的
+
+### 文件转换
+
+转换markdown文件为html内容并直接在命令行中输出
+
+```
+pandoc test.md
+```
+
+markdown文件转换为html文件
+
+```
+pandoc test.md -o your-filename-for-html-document.html
+```
+
+markdown文件转换为html文件，如果html文件不完整的话，会添加额外内容使其完整
+
+```
+pandoc test.md -s -o your-filename-for-new-document.html
+```
+
+markdown文件转换为LaTex文件
+
+```
+pandoc test.md -f markdown -t latex -s -o your-filename-for-new-document.tex
+```
+
+根据后缀名自动识别输入和输出格式
+
+```
+pandoc test.md -s -o your-filename-for-new-document.tex
+```
+
+### 制作中文PDF文档存在若干问题
+
+[参考文章](http://www.cnblogs.com/loongfee/p/3223957.html)：
+
+1. 首先markdown文档需要保存在UTF-8编码格式，不然生成pdf时会报告编码错误
+2. pandoc默认的LaTeX引擎是pdflatex，不支持中文，需要修改引擎为xelatex，`--latex-engine=xelatex`
+3. 此时生成的pdf文档里的中文不显示，因为生成pdf时字体不支持中文，需要指定系统上的字体（查看系统字体`fc-list`），`-V mainfont="SimSun"`
+4. 此时生成的文档文字越界，使用别人的[模板](https://github.com/tzengyuxio/pages/tree/gh-pages/pandoc)，并将模板中字体替换为系统上支持的字体
+5. 最后命令如下：`pandoc test.md -o outfile.pdf --latex-engine=xelatex -template=pm-template.latex`
+
 ## Pandoc扩展Markdown语法
 
 ### 脚注
@@ -72,6 +140,7 @@
      第二    	行                5.0 多行
      								   的内容
   -------------------------------------------------------------
+  ```
 
 
   下面是无表头表格，且该表格只有一行内容
@@ -79,7 +148,7 @@
   ----------- ------- --------------- -------------------------
      第一       行               12.0  即使仅含有一个表格行，后面
      									用来分隔表格行的空行也要有
-                                       
+
   -------------------------------------------------------------
   Table: 无表头
   ```
@@ -185,11 +254,6 @@
   ~ 更加紧凑的定义语法
   ```
 
-* ​
-
-
-
-
 
 
 
@@ -198,6 +262,8 @@
 [基于Web的演示文稿](https://en.wikipedia.org/wiki/Web-based_slideshow)比那些通过PowerPoint等软件生成的演示文稿更加灵活，可以让作者将更多精力放在文档内容而不是样式上，而且转换而成的Web演示文稿（Web Slide）是由HTML+Javascript+CSS等内容构成的，可以在任何浏览器上打开。
 
 目前Pandoc支持五种方式生成Web Slide：[S5](http://meyerweb.com/eric/tools/s5/)，[DZSlides](http://paulrouget.com/dzslides/)，[Slidy](https://www.w3.org/Talks/Tools/Slidy2/Overview.html#(1))，[Slideous](http://goessner.net/articles/slideous/)，[reveal.js](https://github.com/hakimel/reveal.js)。其实五种生成方式对应了五种Web Slide解决方案，不同方案演示文稿的表现能力各不相同，下文将着重介绍reveal.js。
+
+### 样例
 
 我们只需要编写纯文本格式文档，然后就可以使用Pandoc将其转换为富有表现形式的Web Slide。用来制作Slide的文档可以使用任何一种Pandoc支持的标记语言（Markdown、org-mode、reST、Textile等）来编辑。下文中将以Markdown为例。
 
@@ -235,73 +301,11 @@
 - Count sheep
 ```
 
+其中文档开头三行包含文章的元信息：标题、作者以及日期。紧随其后的就是一份常规的 Markdown 文档。
 
+除了Markdown外，甚至可以直接在文本中嵌入HTML，用于显示Markdown等标记语言不支持的表格，或控制字体大小，以及进行其他更加复杂的排版。当然，如果用到的HTML标签过多，这不是Markdown这些轻量级标记语言的错，也许是做幻灯片的方式出了问题。因为演示本身要传达的是内容，复杂的排版没有任何意义。
 
-### Pandoc使用方法
-
-Pandoc是一个命令行工具，所以我们需要在命令行环境中使用它
-
-#### 检查是否安装成功
-
-查看版本信息
-
-	pandoc --version [Enter]
-
-#### 命令行中的转换实验
-
-命令行中输入markdown转为html
-
-1. 命令行中输入：`pandoc [Enter]`
-2. 光标在下一行闪动，表示可以在此输入内容，可以输入一些markdown内容，然后输入`[Crtl+Z][Enter]`来表示输入结束
-3. 可以看到刚刚输入的markdown内容被转换为html内容，在命令行中输出了
-
-命令行中输入html转为markdown
-
-1. 命令行中输入：`pandoc -f html -t markdown [Enter]`
-2. 光标在下一行闪动，同刚刚命令一样，可以在命令行中输入内容，转换后在命令行中输出，但这次输入的命令含有参数，其中`-f html`表示输入内容格式为html，`-t markdown`表示输出内容格式为markdown，也就是说这次我们希望将输入的html内容转换为markdown内容在命令行中输出，因此输入一些html内容，再输入`[Crtl+Z][Enter]`表示结束，然后在命令行中可以看到markdown内容输出
-3. 其实pandoc的默认参数是`-f markdown -t html`，所以命令`pandoc [Enter]`和命令`pandoc -f markdown -t html [Enter]`是等价的
-
-#### 文件转换
-
-转换markdown文件为html内容并直接在命令行中输出
-
-	pandoc test.md
-
-markdown文件转换为html文件
-
-	pandoc test.md -o your-filename-for-html-document.html
-
-markdown文件转换为html文件，如果html文件不完整的话，会添加额外内容使其完整
-
-	pandoc test.md -s -o your-filename-for-new-document.html
-
-markdown文件转换为LaTex文件
-
-	pandoc test.md -f markdown -t latex -s -o your-filename-for-new-document.tex
-
-根据后缀名自动识别输入和输出格式
-
-	pandoc test.md -s -o your-filename-for-new-document.tex
-
-#### 制作中文PDF文档存在若干问题
-
-1. 首先markdown文档需要保存在UTF-8编码格式，不然生成pdf时会报告编码错误
-2. pandoc默认的LaTeX引擎是pdflatex，不支持中文，需要修改引擎为xelatex，`--latex-engine=xelatex`
-3. 此时生成的pdf文档里的中文不显示，因为生成pdf时字体不支持中文，需要指定系统上的字体（查看系统字体`fc-list`），`-V mainfont="SimSun"`
-4. 此时生成的文档文字越界，使用别人的[模板](https://github.com/tzengyuxio/pages/tree/gh-pages/pandoc)，并将模板中字体替换为系统上支持的字体
-5. 最后命令如下：`pandoc test.md -o outfile.pdf --latex-engine=xelatex -template=pm-template.latex`
-
-[参考文章](http://www.cnblogs.com/loongfee/p/3223957.html)
-
-
-
-
-
-	
-
-文档开头三行包含元信息：标题，作者，日期
-
-可以直接在文本中嵌入HTML，用于显示Markdown等标记语言不支持的表格，或控制字体大小，以及进行其他更加复杂的排版。当然，如果用到的HTML标签过多，这不是Markdown这些轻量级标记语言的错，也许是做幻灯片的方式出了问题。因为演示本身要传达的是内容，复杂的排版没有任何意义。
+### 幻灯片框架简介
 
 目前Pandoc内置了对五种HTML幻灯片框架的支持：
 
@@ -313,6 +317,8 @@ markdown文件转换为LaTex文件
 
 当然，你实际上可以使用任何喜欢的幻灯片框架（比如Google I/O HTML5 slide template），只要让Pandoc在渲染HTML时使用你指定的模板即可。甚至你可以定义自己的模板，如果你知道如何写CSS去定义页面外观、如何写JavaScript让<div>元素动起来，或者已经有了一个不错的HTML幻灯片模板，你就可以直接让Pandoc把Markdown转换成纯HTML片段，用来嵌到自己的模板里
 
+#### DZSlides
+
 DZSlides内置于Pandoc的模板，支持键盘操作→/←翻页，PgUp/PgDn，Home/End，Pandoc生成的DZSlides幻灯片中自包含了所需CSS和JavaScript，无需依赖任何外部文件。
 
 	pandoc slides.md -o slides.html -t dzslides -s
@@ -322,6 +328,8 @@ DZSlides内置于Pandoc的模板，支持键盘操作→/←翻页，PgUp/PgDn�
 	pandoc slides.md -o slides.html -t dzslides --template default.dzslides
 
 可以从这里<https://github.com/jgm/pandoc-templates>找到原来的模板，自行修改后替换掉原先的模板。其余幻灯片框架与此相仿，以后不再赘述。
+
+#### Slidy
 
 HTML Slidy是W3C开发的一个极简主义HTML幻灯片模板，没有任何多余的样式，支持鼠标单击翻页，键盘操作→/←，PgUp/PgDn，Home/End。
 
@@ -335,6 +343,8 @@ HTML Slidy是W3C开发的一个极简主义HTML幻灯片模板，没有任何多
 
 Pandoc生成的Slidy HTML依赖于<http://www.w3.org/Talks/Tools/Slidy2/styles/slidy.css>和<http://www.w3.org/Talks/Tools/Slidy2/scripts/slidy.js>这两个外部文件。若不想依赖<http://www.w3.org/>，可以将它们保存为本地文件。
 
+#### S5
+
 S5（Simple Standards-Based Slide Show System）是一个公有领域的HTML幻灯片规范。它支持鼠标单击翻页，键盘操作→/←，PgUp/PgDn，Home/End。
 
 为了使用S5作为幻灯片框架，需要从[这里](http://meyerweb.com/eric/tools/s5/)下载S5。解压之后把S5文件夹中的ui/default拷贝到幻灯片所在路径下，改名为s5/default即可。
@@ -342,6 +352,7 @@ S5（Simple Standards-Based Slide Show System）是一个公有领域的HTML幻�
 渲染幻灯片：
 
 	pandoc slides.md -o slides.html -t s5 -s
+#### Slideous
 
 Slideous是另一个有些年头的HTML幻灯片框架。支持鼠标单击翻页，键盘操作→/←，PgUp/PgDn，Home/End。
 
@@ -350,6 +361,7 @@ Slideous是另一个有些年头的HTML幻灯片框架。支持鼠标单击翻�
 渲染幻灯片：
 
 	pandoc slides.md -o slides.html -t slideous -s
+#### Reveal.js
 
 reveal.js这东西已经红得不能更红了，最近开始火起来的WYSIWYG在线幻灯片工具slid.es也是基于它。
 
@@ -375,9 +387,12 @@ reveal.js的设计风格（字体、HTML5/CSS3效果）比起前面几个框架�
 * simple：白色背景，黑色文字
 * solarized：奶油色背景，深青色文字
 
+#### LaTex Beamer
+
 LaTeX Beamer虽然不是HTML，Pandoc也可以用来将Markdown文件渲染成LaTeX beamer样式的PDF幻灯片。如需要打印而不是演示时特别有用。
 
 	pandoc slides.md -o slides.pdf -t beamer
+### 如何书写幻灯片里面的 Markdown
 
 幻灯片级别（Slide level）
 
@@ -455,10 +470,3 @@ ex=∑n=0∞xnn!=limn→∞(1+x/n)n
 	</div>
 
 使用键盘s键打开提示板。当然，这个提示板是用来给演讲者自己看的，是不用mirror到外接投影仪的。
-
-
-#### 更多文档
-
-命令中查看帮助文档：`pandoc --help`
-
-官网查看[帮助文档](http://pandoc.org/MANUAL.html)
