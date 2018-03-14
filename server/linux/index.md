@@ -334,9 +334,29 @@ CentOS 6 / Debian 7 / Unbuntu 14.04
 sudo service ssh restart
 ```
 
+## 分析 SSH 被暴力破解
+
+CentOS 的 sshd 进程日志位于 `/var/log/secure`，其它发行版的 Linux 也许在 `/var/log/auth.log`
+
+查看有哪些 IP 在破解 root 密码及其次数
+
+```
+sudo grep "Failed password for root" /var/log/secure | awk '{print $11}' | uniq -c | sort -nr | more
+```
+
+再来看破解猜测了哪些用户名
+
+```
+sudo grep "Failed password for invalid user" /var/log/secure | awk '{print $11}' | uniq -c | sort -nr | more
+```
+
+## 使用 DenyHosts 对 SSH 进行保护
 
 
-## 使用 Fail2Ban 对 SSH 进行登录保护
+
+
+
+## 使用 Fail2Ban 对 SSH 进行保护
 
 [*Fail2Ban*](http://www.fail2ban.org/wiki/index.php/Main_Page) is an application that bans IP addresses from logging into your server after too many failed login attempts. Since legitimate logins usually take no more than three tries to succeed (and with SSH keys, no more than one), a server being spammed with unsuccessful logins indicates attempted malicious access.
 
@@ -347,6 +367,10 @@ Fail2Ban can monitor a variety of protocols including SSH, HTTP, and SMTP. By de
 很有用，以后配置一下
 
 https://linode.com/docs/security/using-fail2ban-for-security/
+
+
+
+
 
 
 

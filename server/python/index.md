@@ -2,3 +2,4 @@ Python 在 Linux 系统中自带，一般是 Python 2。要安装 Python 3，不
 
 
 
+https://packaging.python.org/tutorials/installing-packages/#creating-and-using-virtual-environments
