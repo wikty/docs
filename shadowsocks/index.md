@@ -6,6 +6,10 @@ Windows / Linux / Mac OS X
 
 ![](shadowsocks-client.jpg)
 
+Windows 客户端指南：https://github.com/shadowsocks/shadowsocks-windows/wiki/Shadowsocks-Windows-%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E
+
+
+
 Android / iOS
 
 客户端需要指定连接服务端的信息，通过以下格式：
@@ -33,6 +37,43 @@ To help organize and identify these URIs, you can append a tag after the BASE64 
 ```
 
 也许觉得上面的方法太麻烦了。还可以将上述信息生成二维码，客户端还支持通过扫描二维码连接服务器
+
+
+
+### 全局代理 vs PAC 代理
+
+设置火狐为自动检测网络的代理设置
+
+![](proxy_settings.jpg)
+
+![](proxy_settings2.jpg)
+
+所谓全局代理的意思是对所有网站的访问都经过代理服务器
+
+PAC 代理
+
+PAC 全称 Proxy auto-config，是浏览器实现自动代理的配置文件，浏览器在访问某个网站时会通过该配置文件来判断是否对本次访问启动代理，这样相较于全局代理，一来避免绕路加快加载速度，二来可以节省代理服务器流量。其实该文件是一个 Javascript 文件，其中包含了许多被墙的网址，如果自己发现某个网站被墙了，也可以自己手动添加网站到该文件中，shadowsocks 会自动检测该文件的变化并及时应用，不过一般建议将自己发现被墙的网站放在用户规则文件中 `user-rule.txt` ，这样在更新 `pac.txt` 时就不会覆盖自定定义的规则了。
+
+从此处获取 PAC list：https://github.com/gfwlist/gfwlist
+
+关于用户定义规则用法详见：https://adblockplus.org/en/filter-cheatsheet
+
+判断当前是否使用代理？
+查看开发者工具中的网络，看请求头的远程地址是否为 `0.0.0.0`
+
+
+
+### 电脑 ss 共享给手机
+
+win7 wifi https://jingyan.baidu.com/article/48a42057a03cf7a9242504d0.html
+
+shadowsocks 开启“允许来自局域网的连接”
+
+手机连接 win7 wifi，然后点击 wifi 右边的 "i" 进行代理设置，如图：
+
+点击手动，填入电脑的 IP 地址，以及 shadowsocks 在电脑上开启的代理端口
+
+![](webwxgetmsgimg.jpg)
 
 
 

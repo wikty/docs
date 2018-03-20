@@ -4,6 +4,8 @@ title: Python Coding Style
 
 ## 简介
 
+dfd[^1]
+
 This document and [PEP 257](https://www.python.org/dev/peps/pep-0257) (Docstring Conventions) were adapted from Guido's original Python Style Guide essay, with some additions from Barry's style guide [[2\]](https://www.python.org/dev/peps/pep-0008/#id9).
 
 Many projects have their own coding style guidelines. In the event of any conflicts, such project-specific guides take precedence for that project.
@@ -55,7 +57,9 @@ Some other good reasons to ignore a particular guideline:
 
 ## 参考文献
 
-[Style Guide for Python Code](https://www.python.org/dev/peps/pep-0008/)
+[^1]: [Style Guide for Python Code](https://www.python.org/dev/peps/pep-0008/)
+
+<a name="@ref1"></a>1. [Style Guide for Python Code](https://www.python.org/dev/peps/pep-0008/)
 
 [Python coding style guide for GNU Mailman](https://barry.warsaw.us/software/STYLEGUIDE.txt)
 
