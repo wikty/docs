@@ -64,3 +64,23 @@
 
 
 经过上述配置后从网络下载的 go 二进制程序，会自动放在 `~/go/bin` 目录中
+
+
+
+## Hugo 安装
+
+Hugo uses [dep](https://github.com/golang/dep) to vendor dependencies, but we don’t commit the vendored packages themselves to the Hugo git repository. Therefore, a simple `go get` is *not* supported because the command is not vendor aware.
+
+The simplest way is to use [mage](https://github.com/magefile/mage) (a Make alternative for Go projects.)
+
+```
+go get github.com/magefile/mage
+go get -d github.com/gohugoio/hugo
+cd ${GOPATH:-$HOME/go}/src/github.com/gohugoio/hugo
+mage vendor
+mage install
+```
+
+## Dep
+
+`dep` is a prototype dependency management tool for Go. It requires Go 1.9 or newer to compile. **dep is safe for production use.**

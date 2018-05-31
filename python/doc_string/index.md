@@ -6,6 +6,8 @@ draft: true
 tags: ["python"]
 ---
 
+https://www.python.org/dev/peps/pep-0257/
+
 #Python Docstring#
 
 在定义module，class，function，method时的第一个语句并且是字符串常量语句就称其为Docstring，该字符串常量会在代码运行时成为所在对象的`__doc__`属性，它的主要用途在于为代码的使用者提供文档帮助
@@ -86,15 +88,15 @@ tags: ["python"]
 
 3. function，method中的Docstring主要简单介绍它的功能，参数，返回值，副作用，会引发的异常，指出可选参数和关键字参数
 
-3. class的Docstring要求开始引号后和结束引号前都要有换行，并且Docstring的前后要各用一个空行与其他内容隔开，Docstring的内容主要介绍它的功能，公开方法，实例属性，如果class中含有将被子类重写的接口则应该列出，class的构造说明写入`__init__()`的Docstring，如果class是一个子类，则应该说明与父类的不同之处，使用*overrid*描述那些被重写的方法，使用*extend*描述那些子类调用父类方法的情况
+4. class的Docstring要求开始引号后和结束引号前都要有换行，并且Docstring的前后要各用一个空行与其他内容隔开，Docstring的内容主要介绍它的功能，公开方法，实例属性，如果class中含有将被子类重写的接口则应该列出，class的构造说明写入`__init__()`的Docstring，如果class是一个子类，则应该说明与父类的不同之处，使用*overrid*描述那些被重写的方法，使用*extend*描述那些子类调用父类方法的情况
 
-4. 如果function，method中的代码是用很多空行分隔开成块的代码段，则Docstring前后个添加一个空行，形成块状的感觉
+5. 如果function，method中的代码是用很多空行分隔开成块的代码段，则Docstring前后个添加一个空行，形成块状的感觉
 
-5. 为脚本编写的Docstring应该阐明脚本的用法，就像命令行中使用的--help参数实现的功能一样，即有简单的使用方法又涵盖所有的脚本用法和参数
+6. 为脚本编写的Docstring应该阐明脚本的用法，就像命令行中使用的--help参数实现的功能一样，即有简单的使用方法又涵盖所有的脚本用法和参数
 
 7. module的Docstring通常用于列出其中含有的class，function，exception以及变量等被module导出对象的信息，每行内容简单介绍一个对象
 
-6. package的Docstring写入package directory文件`__init__.py`文件中，每行内容简单介绍一个module或sub-package
+8. package的Docstring写入package directory文件`__init__.py`文件中，每行内容简单介绍一个module或sub-package
 
 ##对多行字符串缩进的处理##
 

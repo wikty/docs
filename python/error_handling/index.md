@@ -2,7 +2,9 @@ When you raise an exception or some function you called raises an exception, tha
 
 
 
+https://www.python.org/dev/peps/pep-3151/
 
+The standard exception hierarchy is an important part of the Python language. It has two defining qualities: it is both generic and selective. Generic in that the same exception type can be raised - and handled - regardless of the context (for example, whether you are trying to add something to an integer, to call a string method, or to write an object on a socket, a TypeError will be raised for bad argument types). Selective in that it allows the user to easily handle (silence, examine, process, store or encapsulate...) specific kinds of error conditions while letting other errors bubble up to higher calling contexts. For example, you can choose to catch ZeroDivisionErrors without affecting the default handling of other ArithmeticErrors (such as OverflowErrors).
 
 
 
@@ -292,6 +294,87 @@ https://docs.python.org/2/library/exceptions.html#bltin-exceptions
 * 自定义的异常类，最好实现 `__str__()` 方法，来体现异常接收到的参数，而不是通过引用异常属性 `args` 来访问这些参数。
 * ​
 
+
+
+
+
+
+- Derive exceptions from `Exception` rather than `BaseException`. Direct inheritance from `BaseException` is reserved for exceptions where catching them is almost always the wrong thing to do.
+
+  Design exception hierarchies based on the distinctions that code *catching* the exceptions is likely to need, rather than the locations where the exceptions are raised. Aim to answer the question "What went wrong?" programmatically, rather than only stating that "A problem occurred" (see [PEP 3151](https://www.python.org/dev/peps/pep-3151) for an example of this lesson being learned for the builtin exception hierarchy)
+
+  Class naming conventions apply here, although you should add the suffix "Error" to your exception classes if the exception is an error. Non-error exceptions that are used for non-local flow control or other forms of signaling need no special suffix.
+
+- Use exception chaining appropriately. In Python 3, "raise X from Y" should be used to indicate explicit replacement without losing the original traceback.
+
+  When deliberately replacing an inner exception (using "raise X" in Python 2 or "raise X from None" in Python 3.3+), ensure that relevant details are transferred to the new exception (such as preserving the attribute name when converting KeyError to AttributeError, or embedding the text of the original exception in the new exception message).
+
+- When raising an exception in Python 2, use `raise ValueError('message')` instead of the older form `raise ValueError, 'message'`.
+
+  The latter form is not legal Python 3 syntax.
+
+  The paren-using form also means that when the exception arguments are long or include string formatting, you don't need to use line continuation characters thanks to the containing parentheses.
+
+- When catching exceptions, mention specific exceptions whenever possible instead of using a bare `except:` clause.
+
+  For example, use:
+
+  ```
+  try:
+      import platform_specific_module
+  except ImportError:
+      platform_specific_module = None
+
+  ```
+
+  A bare `except:` clause will catch SystemExit and KeyboardInterrupt exceptions, making it harder to interrupt a program with Control-C, and can disguise other problems. If you want to catch all exceptions that signal program errors, use `except Exception:` (bare except is equivalent to `except BaseException:`).
+
+  A good rule of thumb is to limit use of bare 'except' clauses to two cases:
+
+  1. If the exception handler will be printing out or logging the traceback; at least the user will be aware that an error has occurred.
+  2. If the code needs to do some cleanup work, but then lets the exception propagate upwards with `raise`. `try...finally`can be a better way to handle this case.
+
+- When binding caught exceptions to a name, prefer the explicit name binding syntax added in Python 2.6:
+
+  ```
+  try:
+      process_data()
+  except Exception as exc:
+      raise DataProcessingFailedError(str(exc))
+
+  ```
+
+  This is the only syntax supported in Python 3, and avoids the ambiguity problems associated with the older comma-based syntax.
+
+- When catching operating system errors, prefer the explicit exception hierarchy introduced in Python 3.3 over introspection of `errno` values.
+
+- Additionally, for all try/except clauses, limit the `try` clause to the absolute minimum amount of code necessary. Again, this avoids masking bugs.
+
+  Yes:
+
+  ```
+  try:
+      value = collection[key]
+  except KeyError:
+      return key_not_found(key)
+  else:
+      return handle_value(value)
+
+  ```
+
+  No:
+
+  ```
+  try:
+      # Too broad!
+      return handle_value(collection[key])
+  except KeyError:
+      # Will also catch KeyError raised by handle_value()
+      return key_not_found(key)
+
+  ```
+
+- When a resource is local to a particular section of code, use a `with` statement to ensure it is cleaned up promptly and reliably after use. A try/finally statement is also acceptable.
 
 
 

@@ -3,3 +3,11 @@
 https://huoding.com/2015/02/11/419
 
 https://www.gunes.io/2017/08/24/systemd-vs-supervisor
+
+
+
+CentOS 7 推荐使用 Systemd
+
+官网：https://freedesktop.org/wiki/Software/systemd/
+
+使用教程：http://www.ruanyifeng.com/blog/2016/03/systemd-tutorial-commands.html
