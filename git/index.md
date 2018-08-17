@@ -1,3 +1,5 @@
+# 安装配置
+
 主要是客户端的用法
 
 ## 配置
@@ -156,3 +158,91 @@ https://www.digitalocean.com/community/tutorials/how-to-use-git-hooks-to-automat
 不重复的引用公共资源 gti submodule
 
 当项目越来越庞大之后，不可避免的要拆分成多个子模块，我们希望各个子模块有独立的版本管理，并且由专门的人去维护，这时候我们就要用到git的submodule功能
+
+
+
+# 使用
+
+Github's Git Handbook
+
+https://guides.github.com/introduction/git-handbook/
+
+### What’s a version control system?
+
+A version control system, or VCS, tracks the history of changes as people and teams collaborate on projects together. As the project evolves, teams can run tests, fix bugs, and contribute new code with the confidence that any version can be recovered at any time. Developers can review project history to find out:
+
+- Which changes were made?
+- Who made the changes?
+- When were the changes made?
+- Why were changes needed?
+
+### What’s a distributed version control system?
+
+Git is an example of a distributed version control system (DVCS) commonly used for open source and commercial software development. DVCSs allow full access to every file, branch, and iteration of a project, and allows every user access to a full and self-contained history of all changes. Unlike once popular centralized version control systems, DVCSs like Git don’t need a constant connection to a central repository. Developers can work anywhere and collaborate asynchronously from any time zone.
+
+### What’s a repository?
+
+A *repository*, or [Git project](https://git-scm.com/), encompasses the entire collection of files and folders associated with a project, along with each file’s revision history. The file history appears as snapshots in time called *commits*, and the commits exist as a linked-list relationship, and can be organized into multiple lines of development called *branches*. Because Git is a DVCS, repositories are self-contained units and anyone who owns a copy of the repository can access the entire codebase and its history. Using the command line or other ease-of-use interfaces, a git repository also allows for: interaction with the history, cloning, creating branches, committing, merging, comparing changes across versions of code, and more.
+
+Working in repositories keeps development projects organized and protected. Developers are encouraged to fix bugs, or create fresh features, without fear of derailing mainline development efforts. Git facilitates this through the use of topic branches: lightweight pointers to commits in history that can be easily created and deprecated when no longer needed.
+
+Through platforms like GitHub, Git also provides more opportunities for project transparency and collaboration. Public repositories help teams work together to build the best possible final product.
+
+### Basic Git commands
+
+To use Git, developers use specific commands to copy, create, change, and combine code. These commands can be executed directly from the command line or by using an application like [GitHub Desktop](https://desktop.github.com/) or Git Kraken. Here are some common commands for using Git:
+
+- `git init` initializes a brand new Git repository and begins tracking an existing directory. It adds a hidden subfolder within the existing directory that houses the internal data structure required for version control.
+- `git clone` creates a local copy of a project that already exists remotely. The clone includes all the project’s files, history, and branches.
+- `git add` stages a change. Git tracks changes to a developer’s codebase, but it’s necessary to stage and take a snapshot of the changes to include them in the project’s history. This command performs staging, the first part of that two-step process. Any changes that are staged will become a part of the next snapshot and a part of the project’s history. Staging and committing separately gives developers complete control over the history of their project without changing how they code and work.
+- `git commit` saves the snapshot to the project history and completes the change-tracking process. In short, a commit functions like taking a photo. Anything that’s been staged with `git add` will become a part of the snapshot with `git commit`.
+- `git status` shows the status of changes as untracked, modified, or staged.
+- `git branch` shows the branches being worked on locally.
+- `git merge` merges lines of development together. This command is typically used to combine changes made on two distinct branches. For example, a developer would merge when they want to combine changes from a feature branch into the master branch for deployment.
+- `git pull` updates the local line of development with updates from its remote counterpart. Developers use this command if a teammate has made commits to a branch on a remote, and they would like to reflect those changes in their local environment.
+- `git push` updates the remote repository with any commits made locally to a branch.
+
+### How GitHub works
+
+GitHub builds collaboration directly into the developement process. Work is organized into repositories, where devlopers can outlines requirements or direction and set expectations for team members. Then, using the GitHub flow, developers simply create a branch to work on updates, commit changes to save them, open a pull request to propose and discuss changes, and merge pull requests once everyone is on the same page.
+
+### The GitHub flow
+
+The GitHub flow is a lightweight, branch-based workflow built around core Git commands used by teams around the globe—including ours.
+
+The GitHub flow has six steps, each with distinct benefits when implemented:
+
+1. **Create a branch:** Topic branches created from the canonical deployment branch (usually `master`) allow teams to contribute to many parallel efforts. Short-lived topic branches, in particular, keep teams focused and results in quick ships.
+2. **Add commits:** Snapshots of development efforts within a branch create safe, revertible points in the project’s history.
+3. **Open a pull request:** Pull requests publicize a project’s ongoing efforts and set the tone for a transparent development process.
+4. **Discuss and review code:** Teams participate in code reviews by commenting, testing, and reviewing open pull requests. Code review is at the core of an open and participatory culture.
+5. **Merge:** Upon clicking merge, GitHub automatically performs the equivalent of a local ‘git merge’ operation. GitHub also keeps the entire branch development history on the merged pull request.
+6. **Deploy:** Teams can choose the best release cycles or incorporate continuous integration tools and operate with the assurance that code on the deployment branch has gone through a robust workflow.
+
+### The ways of GitHub for collaborative development
+
+There are two primary ways people collaborate on GitHub:
+
+1. Shared repository
+2. [Fork](https://help.github.com/articles/about-forks/) and [pull](https://help.github.com/articles/using-pull-requests)
+
+With a *shared repository*, individuals and teams are explicitly designated as contributors with read, write, or administrator access. This simple permission structure, combined with features like protected branches and Marketplace, helps teams progress quickly when they adopt GitHub.
+
+For an open source project, or for projects to which anyone can contribute, managing individual permissions can be challenging, but a *fork and pull* model allows anyone who can view the project to contribute. A fork is a copy of a project under an developer’s personal account. Every developer has full control of their fork and is free to implement a fix or new feature. Work completed in forks is either kept separate, or is surfaced back to the original project via a pull request. There, maintainers can review the suggested changes before they’re merged. 
+
+https://guides.github.com/activities/forking/
+
+#### Fork
+
+After using GitHub by yourself for a while, you may find yourself wanting to contribute to someone else’s project. Or maybe you’d like to use someone’s project as the starting point for your own. This process is known as *forking.*
+
+Creating a “fork” is producing a personal copy of someone else’s project. Forks act as a sort of bridge between the original repository and your personal copy. You can submit *Pull Requests* to help make other people’s projects better by offering your changes up to the original project.
+
+Fork -> Clone -> Add and Commit the changes -> Push to remote
+
+#### Pull request
+
+It’s important to provide as much useful information and a rationale for *why* you’re making this Pull Request in the first place. The project owner needs to be able to determine whether your change is as useful to everyone as you think it is.
+
+Pull Requests are an area for discussion. For projects, don’t be offended if the project owner rejects your Pull Request, or asks for more information on why it’s been made. It may even be that the project owner chooses not to merge your pull request, and that’s totally okay. Your copy will exist in infamy on the Internet. And who knows–maybe someone you’ve never met will find your changes much more valuable than the original project. Share and share alike!
+

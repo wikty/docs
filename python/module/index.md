@@ -196,6 +196,8 @@ sound/                          Top-level package
 - 当执行 `from sound.effects import *` 导入语句时，还发生了什么：文件 `sound/effects/__init__.py` 中代码被执行（一般用来初始化包），同时该文件中定义的全局对象被导入到了当前模块中（准确来说，只有遵从特定命名规范的全局对象才会被导入）。
 - 无论如何 `import *` 语句都不是推荐的导入方式，应该尽量避免使用。
 
+文件 `__init__.py` 中经常会将子包或模块中的函数、类等对象导入，以简化包的使用者在导入包时的语法。假设 `sound.effects.echo` 模块中含有类 `SimpleEcho`，如果 `sound/__init__.py` 是空文件的话，包的使用者要导入该类的话，需要这样做：`from sound.effects.echo import SimpleEcho`；但如果包开发者在 `sound/__init__.py` 中写入 `from .effects.echo import SimpleEcho` 时，包的使用者只需要这样做即可：`from sound import SimpleEcho`。
+
 ### 包当成脚本来运行
 
 我们知道模块可以被当成脚本来运行，同样包也一样可以当成脚本来运行，首先我们需要为包添加一个 `__main__.py` 文件（如 `sound/__main__.py`），并将要在脚本环境下运行的代码放在这里（无需通过 `if __name__ == "__main__"` 进行条件判断），然后运行如下命令即可：
