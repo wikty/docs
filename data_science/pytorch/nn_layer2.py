@@ -17,7 +17,23 @@ y = torch.randn(train_n, out_dim, dtype=dtype, device=device)
 w1 = torch.randn(hidden_dim, in_dim, dtype=dtype, device=device)
 w2 = torch.randn(out_dim, hidden_dim, dtype=dtype, device=device)
 
-for e in range(epoch):
+
+class ReLU(torch.autograd.Function):
+
+	@staticmethod
+	def forward(ctx, in_data):
+		ctx.save_for_backward(in_data)
+		return in_data.clamp(min=0.)
+
+	@staticmethod
+	def backward(ctx, out_grad):
+		in_data, = ctx.saved_tensors
+		in_grad = out_grad.clone()
+		in_grad[in_data < 0.] = 0.
+		return in_grad
+
+
+def manual_grad(x, y):
 	# forward: hidden layer
 	a0 = x.t()
 	z1 = w1.mm(a0)
@@ -28,7 +44,6 @@ for e in range(epoch):
 
 	# MSE Loss
 	loss = (a2 - y.t()).pow(2).sum().item() / train_n
-	print('Loss: {}'.format(loss))
 
 	# backward: output layer
 	a2_grad = 2 * (a2 - y.t())
@@ -40,6 +55,38 @@ for e in range(epoch):
 	z1_grad[z1 < 0.] = 0
 	w1_grad = z1_grad.mm(a0.t())
 
+	return w1_grad, w2_grad, loss
+
+
+def automatic_grad(x, y):
+	# require autograd to track them
+	w1.requires_grad_(True)
+	w2.requires_grad_(True)
+	# clear gradients buffer
+	if w1.grad is not None:
+		w1.grad.zero_()
+	if w2.grad is not None:
+		w2.grad.zero_()
+	# forward
+	# output = w2.mm(w1.mm(x.t()).clamp(min=0.))
+	output = w2.mm(ReLU.apply(w1.mm(x.t())))
+	# MSE Loss
+	loss = (output - y.t()).pow(2).sum()
+	# backward
+	loss.backward()  # autograd for w1 and w2
+
+	return w1.grad, w2.grad, loss.item()/train_n
+
+
+# train
+for e in range(epoch):
+	# w1_grad, w2_grad, loss = manual_grad(x, y)
+	w1_grad, w2_grad, loss = automatic_grad(x, y)
+	
+	# MSE Loss
+	print('Loss: {}'.format(loss))
+	
 	# update parameters
-	w1 -= learning_rate * w1_grad
-	w2 -= learning_rate * w2_grad
+	with torch.no_grad():
+		w1 -= learning_rate * w1_grad
+		w2 -= learning_rate * w2_grad
