@@ -34,15 +34,31 @@ net.cuda(device)
 
 # Loss
 loss_fn = torch.nn.MSELoss(reduction='sum')
+optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate)
+
+def optim(loss, opt=None):
+	# clear gradients buffer
+	if opt is not None:
+		# built-in optimization
+		opt.zero_grad()
+	else:
+		# mannual optimization
+		net.zero_grad()
+	# backward
+	loss.backward()
+	# update parameters
+	if opt is not None:
+		# built-in optimization
+		opt.step()
+	else:
+		# mannual optimzation
+		with torch.no_grad():
+			for param in net.parameters():
+				param -= learning_rate * param.grad
 
 # Train
 for e in range(epoch):
 	output = net(x)
 	loss = loss_fn(output, y)
 	print('Loss: {}'.format(loss.item()))
-	net.zero_grad()
-	loss.backward()
-
-	with torch.no_grad():
-		for parameter in net.parameters():
-			parameter -= learning_rate * parameter.grad
+	optim(loss, optimizer)	
