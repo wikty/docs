@@ -10,7 +10,7 @@ If the setUp() method raises an exception while the test is running, the framewo
 ## test case
 A test case is the individual unit of testing. It checks for a specific response to a particular set of inputs. unittest provides a base class, TestCase, which may be used to create new test cases.
 
-The basic building blocks of unit testing are test cases ¡ª single scenarios that must be set up and checked for correctness.
+The basic building blocks of unit testing are test cases â€” single scenarios that must be set up and checked for correctness.
 
 Note that in order to test something, we use one of the assert*() methods provided by the TestCase base class. If the test fails, an exception will be raised, and unittest will identify the test case as a failure. Any other exceptions will be treated as errors.
 assert*() methods are used instead of the assert statement so the test runner can accumulate all test results and produce a report.
@@ -24,7 +24,7 @@ In some cases, the existing tests may have been written using the doctest module
 
 ## test suite
 A test suite is a collection of test cases, test suites, or both. It is used to aggregate tests that should be executed together
-test case instances are grouped together according to the features they test. unittest provides a mechanism for this: the test suite, represented by unittest¡¯s TestSuite class.
+test case instances are grouped together according to the features they test. unittest provides a mechanism for this: the test suite, represented by unittestâ€™s TestSuite class.
 
 ## test runner
 A test runner is a component which orchestrates the execution of tests and provides the outcome to the user. The runner may use a graphical interface, a textual interface, or return a special value to indicate the results of executing the tests.
@@ -46,7 +46,7 @@ python -m unittest discover -s project_directory -p "*_test.py"
 python -m unittest discover project_directory "*_test.py"
 
 ## test skipping and expected failures
-Unittest supports skipping individual test methods and even whole classes of tests. In addition, it supports marking a test as an ¡°expected failure,¡± a test that is broken and will fail, but shouldn¡¯t be counted as a failure on a TestResult.
+Unittest supports skipping individual test methods and even whole classes of tests. In addition, it supports marking a test as an â€œexpected failure,â€ a test that is broken and will fail, but shouldnâ€™t be counted as a failure on a TestResult.
 
 ## Distinguishing test iterations using subtests
 class NumbersTest(unittest.TestCase):
@@ -64,8 +64,8 @@ class NumbersTest(unittest.TestCase):
 For example for a directory structure like this:
 
 new_project
-©À©¤©¤ antigravity.py
-©¸©¤©¤ test_antigravity.py
+â”œâ”€â”€ antigravity.py
+â””â”€â”€ test_antigravity.py
 You can just run:
 
 $ cd new_project
@@ -73,12 +73,12 @@ $ python -m unittest test_antigravity
 For a directory structure like yours:
 
 new_project
-©À©¤©¤ antigravity
-©¦   ©À©¤©¤ __init__.py         # make it a package
-©¦   ©¸©¤©¤ antigravity.py
-©¸©¤©¤ test
-    ©À©¤©¤ __init__.py         # also make test a package
-    ©¸©¤©¤ test_antigravity.py
+â”œâ”€â”€ antigravity
+â”‚   â”œâ”€â”€ __init__.py         # make it a package
+â”‚   â””â”€â”€ antigravity.py
+â””â”€â”€ test
+    â”œâ”€â”€ __init__.py         # also make test a package
+    â””â”€â”€ test_antigravity.py
 And in the test modules inside the test package, you can import the antigravity package and its modules as usual:
 
 # import the package
